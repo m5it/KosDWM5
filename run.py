@@ -463,35 +463,14 @@ class WMCtrlTray:
 		now = datetime.now()
 		time_str = now.strftime("%H:%M:%S")
 		date_str = "{} |".format(now.strftime("%Y-%m-%d"))
-		# Update the time label if it exists
+		
+		# Update the time label text (labels now created in create_widgets)
 		if hasattr(self, 'time_label'):
 			self.time_label.config(text=time_str)
-		else:
-			# Create the time label if it doesn't exist
-			self.time_label = tk.Label(
-				#self.title_bar,
-				self.time_frame,
-				text=time_str,
-				bg='gray',
-				fg='white',
-				font=('Arial', 10)
-			)
-			self.time_label.pack(side=tk.RIGHT, padx=0,pady=0,ipady=0)
- 
-		# Update the date label if it exists
+		
+		# Update the date label text
 		if hasattr(self, 'date_label'):
 			self.date_label.config(text=date_str)
-		else:
-			# Create the date label if it doesn't exist
-			self.date_label = tk.Label(
-				#self.title_bar,
-				self.time_frame,
-				text=date_str,
-				bg='gray',
-				fg='white',
-				font=('Arial', 10)
-			)
-			self.date_label.pack(side=tk.RIGHT, padx=0,pady=0,ipady=0)
 	#
 	def create_widgets(self):
 		"""Create the widgets for the window list"""
@@ -580,13 +559,29 @@ class WMCtrlTray:
 		# Create a frame for the time/date display on the right side of the title bar
 		self.frame3 = tk.Frame(self.title_bar)
 		self.frame3.pack(side=tk.RIGHT)
-		# Create a frame for the time/date display on the right side of the title bar
-		self.frame3 = tk.Frame(self.title_bar)
-		self.frame3.pack(side=tk.RIGHT)
 		self.time_frame = tk.Frame(self.frame3)
 		self.time_frame.pack(side=tk.RIGHT, padx=1, pady=0)
 		
-		# Create frame for gadget buttons (left of datetime)
+		# Create datetime labels FIRST (packed RIGHT so they appear on the right)
+		self.date_label = tk.Label(
+			self.time_frame,
+			text="",
+			bg='gray',
+			fg='white',
+			font=('Arial', 10)
+		)
+		self.date_label.pack(side=tk.RIGHT, padx=0, pady=0)
+		
+		self.time_label = tk.Label(
+			self.time_frame,
+			text="",
+			bg='gray',
+			fg='white',
+			font=('Arial', 10)
+		)
+		self.time_label.pack(side=tk.RIGHT, padx=0, pady=0)
+		
+		# Create frame for gadget buttons (will appear left of datetime)
 		self.gadget_frame = tk.Frame(self.time_frame, bg='gray')
 		self.gadget_frame.pack(side=tk.LEFT, padx=(0, 2))
 		
@@ -606,11 +601,14 @@ class WMCtrlTray:
 		
 		#
 		self.display_gadgets()
+		#
 		self.start_observer_thread()
 		self.start_time_thread()
+	
 	def _open_gadget_config(self):
 		"""Open the gadget configuration window."""
 		GadgetConfigWindow(self.root, self.gadget_manager, on_save_callback=self.display_gadgets)
+	
 	def display_gadgets(self):
 		"""Display enabled gadgets in the gadget frame."""
 		# Clear existing gadgets
