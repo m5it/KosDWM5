@@ -1,0 +1,6 @@
+[2026-07-22 15:10:28] CMD: python -m py_compile run.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-22 15:10:30] CMD: python -m py_compile src/gadgets.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-22 15:10:33] CMD: python -c from src.gadgets import GadgetManager, GadgetConfigWindow, HelloWorldGadget; print("Imports successful") | SUCCESS: True | OUTPUT_LEN: 322
+[2026-07-22 15:10:43] CMD: python -c from src.gadgets import GadgetManager, GadgetConfigWindow, HelloWorldGadget; print("Imports successful") | SUCCESS: True | OUTPUT_LEN: 19
+[2026-07-22 15:10:46] CMD: python -c import run; print("run.py imports successfully") | SUCCESS: True | OUTPUT_LEN: 301
+[2026-07-22 15:10:50] CMD: python -m py_compile run.py src/config.py src/functions.py src/gadgets.py | SUCCESS: True | OUTPUT_LEN: 0

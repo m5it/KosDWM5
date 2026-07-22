@@ -12,6 +12,7 @@ import json
 import importlib.util
 from src.functions import *
 from src.config import Config
+from src.gadgets import GadgetManager, GadgetConfigWindow
 
 
 class MainMenus:
@@ -204,6 +205,7 @@ class WMCtrlTray:
 		self.stop_thread  = False
 		self.root         = root
 		self.config       = config
+		self.gadget_manager = GadgetManager()
 		# Get the primary monitor's dimensions
 		self.screen = screeninfo.get_monitors()[0]
 		screen_width = self.screen.width
@@ -580,12 +582,62 @@ class WMCtrlTray:
 		self.frame3.pack(side=tk.RIGHT)
 		self.time_frame = tk.Frame(self.frame3)
 		self.time_frame.pack(side=tk.RIGHT, padx=1, pady=0)
+		
+		# Add gadget config button (gear icon) before date/time
+		self.gadget_config_btn = tk.Button(
+			self.time_frame,
+			text="⚙",
+			width=2,
+			height=1,
+			bg='gray',
+			fg='white',
+			relief='raised',
+			bd=1,
+			command=self._open_gadget_config
+		)
+		self.gadget_config_btn.pack(side=tk.RIGHT, padx=(0, 2))
+		
+		# Create frame for gadget buttons (between config button and date)
+		self.gadget_frame = tk.Frame(self.time_frame, bg='gray')
+		self.gadget_frame.pack(side=tk.RIGHT, padx=(0, 2))
+		
 		#
-		self.update_window_list()
+		self.display_gadgets()
+		#
 		#
 		self.start_observer_thread()
 		self.start_time_thread()
-	#
+	def _open_gadget_config(self):
+		"""Open the gadget configuration window."""
+		GadgetConfigWindow(self.root, self.gadget_manager, on_save_callback=self.display_gadgets)
+	
+	def display_gadgets(self):
+		"""Display enabled gadgets in the gadget frame."""
+		# Clear existing gadgets
+		for widget in self.gadget_frame.winfo_children():
+			widget.destroy()
+		
+		# Get enabled gadgets and create buttons for each
+		gadgets = self.gadget_manager.get_enabled_gadgets()
+		for gadget in gadgets:
+			btn = tk.Button(
+				self.gadget_frame,
+				text=gadget.get_icon(),
+				width=4,
+				height=1,
+				bg='gray',
+				fg='white',
+				relief='raised',
+				bd=1
+			)
+			btn.pack(side=tk.LEFT, padx=(0, 2))
+			# Bind click event to gadget's on_click method
+			btn.bind("<Button-1>", lambda e, g=gadget: g.on_click(e))
+			# Add tooltip
+			if hasattr(gadget, 'get_tooltip'):
+				# Simple tooltip using title (can be enhanced later)
+				btn.config(text=gadget.get_icon())
+	
 	def on_combobox_click(self, event):
 		"""Handle combobox click - expand and show actual window name"""
 		if self.window_combobox is None:

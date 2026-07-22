@@ -12,7 +12,9 @@ class Config:
         "bar_height": 50,
         "button_height": 1,
         "combobox_ipady": 1,
-        "layout_mode": "buttons"  # "buttons" = buttons + all windows combobox, "comboboxes" = 4 desktop window comboboxes
+        "layout_mode": "buttons",  # "buttons" = buttons + all windows combobox, "comboboxes" = 4 desktop window comboboxes
+        "gadgets_enabled": ["hello_world"],
+        "gadgets_config": {}
     }
     
     def __init__(self):
