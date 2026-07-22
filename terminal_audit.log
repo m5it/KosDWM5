@@ -6,3 +6,17 @@
 [2026-07-22 15:10:50] CMD: python -m py_compile run.py src/config.py src/functions.py src/gadgets.py | SUCCESS: True | OUTPUT_LEN: 0
 [2026-07-22 16:34:21] CMD: python -m py_compile run.py | SUCCESS: True | OUTPUT_LEN: 0
 [2026-07-22 16:37:58] CMD: python -m py_compile run.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-22 16:44:36] CMD: python -m py_compile src/gadgets.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-22 16:47:08] CMD: python -m py_compile src/gadgets.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-22 16:47:36] CMD: ls -la ~/.config/KosDWM/gadgets/ | SUCCESS: True | OUTPUT_LEN: 368
+[2026-07-22 16:47:48] CMD: python -c from src.gadgets import GadgetManager, GadgetConfigWindow, GadgetBase; gm = GadgetManager(); print(f"Available gadgets: {gm.get_available_gadgets()}"); print(f"Enabled gadgets: {gm._enabled_gadgets}"); print(f"Load errors: {gm.get_load_errors()}") | SUCCESS: True | OUTPUT_LEN: 170
+[2026-07-22 16:47:52] CMD: python -c from pathlib import Path; p = Path.home() / ".config" / "KosDWM" / "gadgets"; print(f"Path: {p}"); print(f"Exists: {p.exists()}"); print(f"Files: {list(p.glob('*.py'))}") | SUCCESS: True | OUTPUT_LEN: 63
+[2026-07-22 16:47:55] CMD: ls -la ~ | SUCCESS: True | OUTPUT_LEN: 148
+[2026-07-22 16:47:59] CMD: pwd | SUCCESS: True | OUTPUT_LEN: 42
+[2026-07-22 16:48:03] CMD: ls -la /home/t3ch/.config/KosDWM/gadgets/ | SUCCESS: True | OUTPUT_LEN: 95
+[2026-07-22 16:48:13] CMD: ls -la /home/t3ch/.config/KosDWM/gadgets/ | SUCCESS: True | OUTPUT_LEN: 205
+[2026-07-22 16:48:22] CMD: ls -la /home/t3ch/.config/KosDWM/gadgets/ | SUCCESS: True | OUTPUT_LEN: 261
+[2026-07-22 16:48:25] CMD: python -c from src.gadgets import GadgetManager; gm = GadgetManager(); print(f"Available: {gm.get_available_gadgets()}"); print(f"Errors: {gm.get_load_errors()}") | SUCCESS: True | OUTPUT_LEN: 352
+[2026-07-22 16:48:33] CMD: sed -i s|from gadgets import|from src.gadgets import| /home/t3ch/.config/KosDWM/gadgets/hello_world.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-22 16:48:40] CMD: sed -i s|from gadgets import|from src.gadgets import| /home/t3ch/.config/KosDWM/gadgets/test_gadget.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-22 16:49:51] CMD: python -c from src.gadgets import GadgetManager; gm = GadgetManager(); print(f"Available: {gm.get_available_gadgets()}"); print(f"Errors: {gm.get_load_errors()}") | SUCCESS: True | OUTPUT_LEN: 247
