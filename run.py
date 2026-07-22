@@ -580,10 +580,17 @@ class WMCtrlTray:
 		# Create a frame for the time/date display on the right side of the title bar
 		self.frame3 = tk.Frame(self.title_bar)
 		self.frame3.pack(side=tk.RIGHT)
+		# Create a frame for the time/date display on the right side of the title bar
+		self.frame3 = tk.Frame(self.title_bar)
+		self.frame3.pack(side=tk.RIGHT)
 		self.time_frame = tk.Frame(self.frame3)
 		self.time_frame.pack(side=tk.RIGHT, padx=1, pady=0)
 		
-		# Add gadget config button (gear icon) before date/time
+		# Create frame for gadget buttons (left of datetime)
+		self.gadget_frame = tk.Frame(self.time_frame, bg='gray')
+		self.gadget_frame.pack(side=tk.LEFT, padx=(0, 2))
+		
+		# Add gadget config button (gear icon) left of gadgets
 		self.gadget_config_btn = tk.Button(
 			self.time_frame,
 			text="⚙",
@@ -595,22 +602,15 @@ class WMCtrlTray:
 			bd=1,
 			command=self._open_gadget_config
 		)
-		self.gadget_config_btn.pack(side=tk.RIGHT, padx=(0, 2))
-		
-		# Create frame for gadget buttons (between config button and date)
-		self.gadget_frame = tk.Frame(self.time_frame, bg='gray')
-		self.gadget_frame.pack(side=tk.RIGHT, padx=(0, 2))
+		self.gadget_config_btn.pack(side=tk.LEFT, padx=(0, 2))
 		
 		#
 		self.display_gadgets()
-		#
-		#
 		self.start_observer_thread()
 		self.start_time_thread()
 	def _open_gadget_config(self):
 		"""Open the gadget configuration window."""
 		GadgetConfigWindow(self.root, self.gadget_manager, on_save_callback=self.display_gadgets)
-	
 	def display_gadgets(self):
 		"""Display enabled gadgets in the gadget frame."""
 		# Clear existing gadgets
@@ -620,8 +620,13 @@ class WMCtrlTray:
 		# Get enabled gadgets and create buttons for each
 		gadgets = self.gadget_manager.get_enabled_gadgets()
 		for gadget in gadgets:
+			# Create a frame for each gadget with reduced height (3px padding top/bottom)
+			gadget_container = tk.Frame(self.gadget_frame, bg='gray', height=20)
+			gadget_container.pack(side=tk.LEFT, padx=(0, 2), pady=(3, 3))
+			gadget_container.pack_propagate(False)
+			
 			btn = tk.Button(
-				self.gadget_frame,
+				gadget_container,
 				text=gadget.get_icon(),
 				width=4,
 				height=1,
@@ -630,7 +635,7 @@ class WMCtrlTray:
 				relief='raised',
 				bd=1
 			)
-			btn.pack(side=tk.LEFT, padx=(0, 2))
+			btn.pack(fill=tk.BOTH, expand=True)
 			# Bind click event to gadget's on_click method
 			btn.bind("<Button-1>", lambda e, g=gadget: g.on_click(e))
 			# Add tooltip
