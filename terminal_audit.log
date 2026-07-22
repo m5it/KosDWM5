@@ -20,3 +20,13 @@
 [2026-07-22 16:48:33] CMD: sed -i s|from gadgets import|from src.gadgets import| /home/t3ch/.config/KosDWM/gadgets/hello_world.py | SUCCESS: True | OUTPUT_LEN: 0
 [2026-07-22 16:48:40] CMD: sed -i s|from gadgets import|from src.gadgets import| /home/t3ch/.config/KosDWM/gadgets/test_gadget.py | SUCCESS: True | OUTPUT_LEN: 0
 [2026-07-22 16:49:51] CMD: python -c from src.gadgets import GadgetManager; gm = GadgetManager(); print(f"Available: {gm.get_available_gadgets()}"); print(f"Errors: {gm.get_load_errors()}") | SUCCESS: True | OUTPUT_LEN: 247
+[2026-07-22 17:20:13] CMD: python -m py_compile src/notices_store.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-22 17:21:12] CMD: python -m py_compile ~/.config/KosDWM/gadgets/notices.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-22 17:22:27] CMD: python -m py_compile src/notices_api.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-22 17:23:50] CMD: python -m py_compile ~/.config/KosDWM/gadgets/notices.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-22 17:25:10] CMD: python -m py_compile src/notifications.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-22 17:25:13] CMD: python -m py_compile ~/.config/KosDWM/gadgets/notices.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-22 17:26:05] CMD: python -m py_compile ~/.config/KosDWM/gadgets/notices.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-22 17:27:20] CMD: cd /home/t3ch/adata2/OurAI/playground/KosDWM | SUCCESS: True | OUTPUT_LEN: 52
+[2026-07-22 17:27:22] CMD: python test_notices_system.py | SUCCESS: True | OUTPUT_LEN: 207
+[2026-07-22 17:28:14] CMD: python test_notices_system.py | SUCCESS: True | OUTPUT_LEN: 3746

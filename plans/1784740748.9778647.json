@@ -1,0 +1,84 @@
+{
+  "id": "1784740748.9778647",
+  "title": "Notices Gadget with HTTP API",
+  "instructions": "Create a Notices gadget for KosDWM that allows users to write down notices with date, time, and optional reminders. The gadget will have a full HTTP API for external editing, adding, and viewing notices. The system will include: (1) A NoticesGadget class extending GadgetBase, (2) A data storage system for notices in JSON format, (3) A GUI window for viewing and managing notices, (4) An HTTP API server using Flask for RESTful operations, (5) Reminder functionality using threading, (6) Integration with the existing gadget framework.",
+  "startTimestamp": 1784740748.9778674,
+  "endTimestamp": 1784741327.3274157,
+  "tasks": {
+    "1784740762.554535": {
+      "id": "1784740762.554535",
+      "status": "completed",
+      "instruction": "Create the data model for notices with fields: id, title, content, created_date, due_date (optional), reminder_time (optional), priority (low/medium/high), completed (boolean). Create a NoticesStore class in src/notices_store.py that handles: (1) Loading/saving notices to ~/.config/KosDWM/notices.json, (2) CRUD operations (create, read, update, delete), (3) Getting overdue/upcoming notices, (4) Marking notices as completed, (5) Searching/filtering notices. Include proper error handling and data validation.",
+      "startTimestamp": 1784740767.039096,
+      "endTimestamp": 1784740823.7420957,
+      "log": [
+        {
+          "timestamp": 1784740767.0392172,
+          "text": "Build started"
+        },
+        {
+          "timestamp": 1784740820.2345712,
+          "text": "Created src/notices_store.py with complete data model and storage system: (1) Notice class with fields: id, title, content, created_date, due_date, reminder_time, priority, completed; (2) Methods for serialization to/from dict, overdue checking, due today checking, upcoming checking, reminder checking; (3) NoticesStore class with thread-safe operations using RLock; (4) CRUD operations: create, get, get_all, update, delete, mark_completed; (5) Query operations: get_active, get_completed, get_overdue, get_due_today, get_upcoming, get_by_priority, get_reminders_due, search; (6) Statistics: get_stats, get_count, get_active_count; (7) Import/export functionality; (8) Persistent storage to ~/.config/KosDWM/notices.json."
+        }
+      ]
+    },
+    "1784740762.554726": {
+      "id": "1784740762.554726",
+      "status": "completed",
+      "instruction": "Create the NoticesGadget class in ~/.config/KosDWM/gadgets/notices.py that extends GadgetBase. The gadget should: (1) Show \"Notes\" or \"\ud83d\udcdd\" as icon with a badge showing count of active notices, (2) On click, open a window showing all notices sorted by due date, (3) Display visual indicators for overdue (red), due today (orange), upcoming (green), (4) Show priority indicators, (5) Include buttons to add new notice, edit, delete, mark complete, (6) Auto-refresh the badge count when notices change. Use the NoticesStore for data operations.",
+      "startTimestamp": 1784740823.7420964,
+      "endTimestamp": 1784740892.2847152,
+      "log": [
+        {
+          "timestamp": 1784740888.7562504,
+          "text": "Created NoticesGadget in ~/.config/KosDWM/gadgets/notices.py with: (1) Icon showing \ud83d\udcdd with badge count of active notices; (2) Tooltip showing overdue/due today/active counts; (3) Window displaying notices sorted by due date with color coding (red=overdue, orange=due today, blue=upcoming, gray=completed); (4) Priority indicators using colored circles; (5) Buttons for New Notice, Refresh, Edit, Delete, Complete; (6) Filter options (All, Active, Completed, Overdue, Due Today, High Priority); (7) NoticeDialog for add/edit with form validation; (8) Auto-refresh timer updating every minute."
+        }
+      ]
+    },
+    "1784740762.5927851": {
+      "id": "1784740762.5927851",
+      "status": "completed",
+      "instruction": "Create src/notices_api.py with a Flask-based HTTP API server. The API should provide endpoints: (1) GET /api/notices - list all notices with optional filters (completed, overdue, priority), (2) GET /api/notices/<id> - get single notice, (3) POST /api/notices - create new notice, (4) PUT /api/notices/<id> - update notice, (5) DELETE /api/notices/<id> - delete notice, (6) POST /api/notices/<id>/complete - mark as completed, (7) GET /api/notices/stats - get statistics. Include JSON request/response handling, proper error responses (404, 400, 500), CORS support, and logging.",
+      "startTimestamp": 1784740892.2847161,
+      "endTimestamp": 1784740959.0474224,
+      "log": [
+        {
+          "timestamp": 1784740955.8199477,
+          "text": "Created src/notices_api.py with Flask-based HTTP API server including all required endpoints: GET /api/notices (with filters for completed, overdue, priority, search), GET /api/notices/<id>, POST /api/notices, PUT /api/notices/<id>, DELETE /api/notices/<id>, POST /api/notices/<id>/complete, GET /api/notices/stats, plus GET /api/health for health checks. Features include: JSON request/response handling, proper HTTP error responses (400, 404, 405, 500), CORS support for cross-origin requests, comprehensive logging, input validation for dates and priorities, thread-safe operations, and both threaded and blocking server modes."
+        }
+      ]
+    },
+    "1784740762.59294": {
+      "id": "1784740762.59294",
+      "status": "completed",
+      "instruction": "Update the NoticesGadget to integrate with the HTTP API: (1) Add configuration option for API port (default 5000), (2) Start/stop the API server when gadget is enabled/disabled, (3) Add visual indicator showing API status (running/stopped), (4) Include API URL in the gadget window for user reference, (5) Ensure API and GUI stay in sync when notices are modified, (6) Add thread safety for concurrent access between API and GUI.",
+      "startTimestamp": 1784740959.0474238,
+      "endTimestamp": 1784741038.195902,
+      "log": []
+    },
+    "1784740762.5930564": {
+      "id": "1784740762.5930564",
+      "status": "completed",
+      "instruction": "Create a reminder notification system: (1) Add a ReminderThread class that checks for due reminders every minute, (2) Show tkinter notification popup when reminder time is reached, (3) Play a sound or show visual alert in the panel, (4) Support snooze functionality (remind again in 5/15/30 minutes), (5) Store dismissed reminders to avoid duplicate notifications, (6) Include reminder settings (enable/disable sounds, notification duration), (7) Test reminder accuracy across system time changes.",
+      "startTimestamp": 1784741038.1959033,
+      "endTimestamp": 1784741119.705714,
+      "log": []
+    },
+    "1784740762.5931733": {
+      "id": "1784740762.5931733",
+      "status": "completed",
+      "instruction": "Create a comprehensive GUI for managing notices: (1) Main window with list view showing all notices with columns: Title, Due Date, Priority, Status, (2) Color-coded rows based on status (overdue/due/completed), (3) Toolbar with buttons: New, Edit, Delete, Complete, Refresh, (4) Filter options: All, Active, Completed, Overdue, (5) Sort options: Due Date, Priority, Created Date, (6) Add/Edit dialog with form fields for all notice properties, (7) Confirmation dialogs for delete, (8) Search bar to filter notices by text.",
+      "startTimestamp": 1784741119.7057152,
+      "endTimestamp": 1784741173.799877,
+      "log": []
+    },
+    "1784740762.5932868": {
+      "id": "1784740762.5932868",
+      "status": "completed",
+      "instruction": "Test the complete system: (1) Verify notices gadget appears in panel with correct badge count, (2) Test creating notices via GUI, (3) Test CRUD operations via HTTP API using curl or browser, (4) Verify API and GUI stay synchronized, (5) Test reminder notifications trigger correctly, (6) Test gadget reload preserves notices, (7) Test error handling (invalid API requests, corrupt data), (8) Document API endpoints with examples.",
+      "startTimestamp": 1784741173.799878,
+      "endTimestamp": 1784741327.3271916,
+      "log": []
+    }
+  }
+}
