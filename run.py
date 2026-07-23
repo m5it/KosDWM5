@@ -566,7 +566,7 @@ class WMCtrlTray:
 		self.date_label = tk.Label(
 			self.time_frame,
 			text="",
-			bg='gray',
+			bg='#4a4a4a',
 			fg='white',
 			font=('Arial', 10)
 		)
@@ -575,15 +575,16 @@ class WMCtrlTray:
 		self.time_label = tk.Label(
 			self.time_frame,
 			text="",
-			bg='gray',
+			bg='#4a4a4a',
 			fg='white',
 			font=('Arial', 10)
 		)
 		self.time_label.pack(side=tk.RIGHT, padx=0, pady=0)
 		
 		# Create frame for gadget buttons (will appear left of datetime)
-		self.gadget_frame = tk.Frame(self.time_frame, bg='gray')
+		self.gadget_frame = tk.Frame(self.time_frame, bg='gray', height=24)
 		self.gadget_frame.pack(side=tk.LEFT, padx=(0, 2))
+		self.gadget_frame.pack_propagate(False)
 		
 		# Add gadget config button (gear icon) left of gadgets
 		self.gadget_config_btn = tk.Button(
@@ -591,7 +592,7 @@ class WMCtrlTray:
 			text="⚙",
 			width=4,
 			height=1,
-			bg='gray',
+			bg='#4a4a4a',
 			fg='white',
 			relief='raised',
 			bd=1,
@@ -610,6 +611,8 @@ class WMCtrlTray:
 		GadgetConfigWindow(self.root, self.gadget_manager, on_save_callback=self.display_gadgets)
 	
 	def display_gadgets(self):
+		print(f'[DEBUG] display_gadgets called')
+		print(f"[DEBUG] display_gadgets called")
 		"""Display enabled gadgets in the gadget frame."""
 		# Clear existing gadgets
 		for widget in self.gadget_frame.winfo_children():
@@ -617,23 +620,32 @@ class WMCtrlTray:
 		
 		# Get enabled gadgets and create buttons for each
 		gadgets = self.gadget_manager.get_enabled_gadgets()
+		print(f'[DEBUG] Found', len(gadgets), 'gadgets')
+		for g in gadgets: print(f'  -', g.get_name())
+		print(f"[DEBUG] Found {len(gadgets)} gadgets")
 		for gadget in gadgets:
+			print(f"[DEBUG] Creating button for: {gadget.get_name()}")
 			# Create a frame for each gadget with reduced height (3px padding top/bottom)
 			gadget_container = tk.Frame(self.gadget_frame, bg='gray', height=20)
 			gadget_container.pack(side=tk.LEFT, padx=(0, 2), pady=(3, 3))
 			gadget_container.pack_propagate(False)
 			
+			print(f'[DEBUG] Creating button for {gadget.get_name()} with icon {gadget.get_icon()}')
 			btn = tk.Button(
 				gadget_container,
 				text=gadget.get_icon(),
 				width=8,
 				height=1,
-				bg='gray',
+				bg='#333333',
 				fg='white',
+				activebackground='#555555',
+				activeforeground='white',
 				relief='raised',
-				bd=1
+				bd=2,
+				font=('Arial', 10, 'bold')
 			)
 			btn.pack(fill=tk.BOTH, expand=True)
+			print(f'[DEBUG] Button packed for {gadget.get_name()}')
 			# Bind click event to gadget's on_click method
 			btn.bind("<Button-1>", lambda e, g=gadget: g.on_click(e))
 			# Add tooltip

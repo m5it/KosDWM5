@@ -294,8 +294,8 @@ class GadgetConfigWindow:
         # Include version in window title
         self.window = tk.Toplevel(self.parent)
         self.window.title(f"Gadget Configuration - KosDWM v{KOSDWM_VERSION}")
-        self.window.geometry("500x400")
-        self.window.resizable(False, False)
+        self.window.geometry("600x800")
+        self.window.resizable(True, True)
         
         # Make window modal
         self.window.transient(self.parent)
@@ -328,29 +328,12 @@ class GadgetConfigWindow:
         )
         desc.pack(pady=(0, 5))
         
-        # Scrollable frame for gadgets
-        scroll_frame = tk.Frame(self.window)
-        scroll_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
-        
-        canvas = tk.Canvas(scroll_frame, height=180)
-        scrollbar = tk.Scrollbar(scroll_frame, orient="vertical", command=canvas.yview)
-        self.gadgets_frame = tk.Frame(canvas)
-        
-        self.gadgets_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
-        
-        canvas.create_window((0, 0), window=self.gadgets_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
-        
-        canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
+        # Simple frame for gadgets (no scrolling - scroll was broken)
+        self.gadgets_frame = tk.Frame(self.window)
+        self.gadgets_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
         
         # Create checkbox for each available gadget
         self._create_gadget_checkboxes()
-        
-        # Errors section
         self._create_errors_section()
         
         # Separator
@@ -498,7 +481,9 @@ class GadgetConfigWindow:
         self.gadget_manager.reload_gadgets()
         self._create_gadget_checkboxes()
         self._create_errors_section()
-        
+
+        if self.on_save_callback:
+            self.on_save_callback()
         if self.on_save_callback:
             self.on_save_callback()
     

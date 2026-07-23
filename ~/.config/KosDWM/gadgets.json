@@ -1,0 +1,7 @@
+{
+  "enabled": [
+    "hello_world",
+    "test_gadget",
+    "notices"
+  ]
+}

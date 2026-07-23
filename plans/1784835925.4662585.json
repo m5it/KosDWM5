@@ -1,0 +1,75 @@
+{
+  "id": "1784835925.4662585",
+  "title": "Fix Gadget Config Window Showing Only Hello World",
+  "instructions": "Investigate and fix why the GadgetConfigWindow only shows \"hello world\" gadget when 5 gadgets are available. The test script confirmed all 5 checkboxes are created, but only 1 is visible in the UI. This suggests a layout/packing issue in the scrollable canvas.",
+  "startTimestamp": 1784835925.4662642,
+  "endTimestamp": 1784836095.244798,
+  "tasks": {
+    "1784835929.379884": {
+      "id": "1784835929.379884",
+      "status": "completed",
+      "instruction": "Run Python code to instantiate GadgetManager and print detailed debug info about what gadgets are found, enabled, and what errors occur during loading. Check if there's a mismatch between what's configured and what's loaded.",
+      "startTimestamp": 1784835946.1283402,
+      "endTimestamp": 1784835984.824837,
+      "log": [
+        {
+          "timestamp": 1784837016.5834389,
+          "text": "Build started"
+        }
+      ]
+    },
+    "1784835933.435031": {
+      "id": "1784835933.435031",
+      "status": "completed",
+      "instruction": "Add debug output to run.py to verify display_gadgets() is called and how many gadgets it processes. Check if buttons are being created but not visible due to packing order or other UI issues.",
+      "startTimestamp": 1784835984.8248413,
+      "endTimestamp": 1784836010.8469756,
+      "log": []
+    },
+    "1784835937.9362755": {
+      "id": "1784835937.9362755",
+      "status": "completed",
+      "instruction": "Examine the _create_gadget_checkboxes method in detail to understand why only one gadget is shown when multiple are available. Check if there's a UI update issue or if gadgets are being filtered.",
+      "startTimestamp": 1784836010.8469794,
+      "endTimestamp": 1784836064.095846,
+      "log": []
+    },
+    "1784835943.1596644": {
+      "id": "1784835943.1596644",
+      "status": "completed",
+      "instruction": "Apply fixes based on findings from previous tasks, then restart KosDWM and verify all gadgets appear in both panel and config menu.",
+      "startTimestamp": 1784836064.0958488,
+      "endTimestamp": 1784836095.2439766,
+      "log": []
+    },
+    "1784837038.3453934": {
+      "id": "1784837038.3453934",
+      "status": "completed",
+      "instruction": "Read the _create_window and _create_gadget_checkboxes methods in src/gadgets.py to understand how the scrollable frame is set up. Look for issues with canvas scrolling, frame packing, or widget visibility.",
+      "startTimestamp": 1784837053.2958207,
+      "endTimestamp": 1784837191.1293375,
+      "log": [
+        {
+          "timestamp": 1784837053.2965727,
+          "text": "Build started"
+        }
+      ]
+    },
+    "1784837044.6142244": {
+      "id": "1784837044.6142244",
+      "status": "completed",
+      "instruction": "Modify the GadgetConfigWindow to properly configure the scrollregion and ensure the gadgets_frame expands correctly. The issue is likely that the canvas doesn't know how large the scrollable area should be.",
+      "startTimestamp": 1784837191.1293426,
+      "endTimestamp": 1784837231.6801066,
+      "log": []
+    },
+    "1784837048.3814185": {
+      "id": "1784837048.3814185",
+      "status": "in_progress",
+      "instruction": "Restart KosDWM and open the gadget config window to verify all 5 gadgets (hello_world, test_gadget, notices, cpu_monitor, system_info) are now visible with checkboxes.",
+      "startTimestamp": 1784837231.6801112,
+      "endTimestamp": null,
+      "log": []
+    }
+  }
+}

@@ -5,6 +5,7 @@
 ## Approved Directories
 .
 ../
+../KosDWM3
 
 ## Approved Files
 

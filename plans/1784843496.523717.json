@@ -1,0 +1,46 @@
+{
+  "id": "1784843496.523717",
+  "title": "Add Window Switcher Dropdown",
+  "instructions": "Add a QComboBox dropdown next to the menus button that lists all running windows using wmctrl -l. When a window is selected, use wmctrl -a to activate it. Include an auto-refresh timer to keep the list updated.",
+  "startTimestamp": 1784843496.523724,
+  "endTimestamp": 1784843745.4596581,
+  "tasks": {
+    "1784843498.8784008": {
+      "id": "1784843498.8784008",
+      "status": "completed",
+      "instruction": "Create src/window_manager_pyqt5.py with a WindowManager class that:\n- Has method get_windows() that runs `wmctrl -l` and parses output\n- Returns list of dicts with id, desktop, title, name\n- Has method activate_window(window_id) that runs `wmctrl -ia <id>`\n- Has method refresh() to update the list\n- Include error handling if wmctrl is not installed",
+      "startTimestamp": 1784843519.1538937,
+      "endTimestamp": 1784843547.8733678,
+      "log": [
+        {
+          "timestamp": 1784843519.1543486,
+          "text": "Build started"
+        }
+      ]
+    },
+    "1784843512.907524": {
+      "id": "1784843512.907524",
+      "status": "completed",
+      "instruction": "Modify panel_pyqt5.py to add a QComboBox window switcher:\n- Add it after the menus button (left side)\n- Set placeholder text \"Windows\" or \"\ud83e\ude9f\"\n- Connect currentIndexChanged to activate selected window\n- Style it to match other panel elements (dark background, white text)\n- Set maximum width to prevent it from taking too much space",
+      "startTimestamp": 1784843547.87337,
+      "endTimestamp": 1784843644.8149571,
+      "log": []
+    },
+    "1784843515.0582113": {
+      "id": "1784843515.0582113",
+      "status": "completed",
+      "instruction": "Add a QTimer in Panel.__init__ that refreshes the window switcher dropdown every 2-3 seconds. When refreshing:\n- Preserve currently selected window if it still exists\n- Update the list with current windows\n- Handle case where wmctrl fails gracefully (disable the dropdown)",
+      "startTimestamp": 1784843644.8149621,
+      "endTimestamp": 1784843651.7145684,
+      "log": []
+    },
+    "1784843517.1063051": {
+      "id": "1784843517.1063051",
+      "status": "completed",
+      "instruction": "Make the window switcher look beautiful and functional:\n- Add an icon (\ud83e\ude9f or similar) before the text\n- Truncate long window titles with \"...\"\n- Show desktop number in tooltip or as prefix\n- Ensure minimum width so it's usable but doesn't dominate\n- Add visual feedback when switching windows",
+      "startTimestamp": 1784843651.7145722,
+      "endTimestamp": 1784843745.4586184,
+      "log": []
+    }
+  }
+}
