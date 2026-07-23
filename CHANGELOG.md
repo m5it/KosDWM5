@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.7] - 2026-07-23
+
+### Changed
+- Auto-incremented version from 1.0.6
+- Files changed: README.md
+
+
 ## [1.0.6] - 2026-07-23
 
 ### Changed

@@ -39,4 +39,4 @@ Create `~/.config/KosDWM/config.json`:
 
 ## License
 
-MIT License - Created with love by B.K. and OpenCode community.
+MIT License - Created with love by B.K. and OpenCode ( editor + BigPickle ) and ollama models.
