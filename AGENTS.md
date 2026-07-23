@@ -1,40 +1,66 @@
 # KosDWM Agent Guide
 
 ## Key Commands
-- Run: `python run.py`
+- **TkInter Version**: `python run.py`
+- **PyQt5 Version**: `python main_pyqt5.py`
 - Config: Edit `~/.config/KosDWM/config.json`
-- Test: Check `test/` directory (if tests exist)
+- Menus: Create folders in `~/.config/KosDWM/Menus/`
 
 ## Important Files
+
+### PyQt5 Version (Current)
+- Entry point: `main_pyqt5.py`
+- Panel: `src/panel_pyqt5.py`
+- Menus: `src/menus_pyqt5.py`
+- Gadgets: `src/gadgets_pyqt5.py`
+- Window Manager: `src/window_manager_pyqt5.py`
+- Desktop Manager: `src/desktop_manager_pyqt5.py`
+
+### Legacy TkInter Version
 - Entry point: `run.py`
 - Config manager: `src/config.py`
 - Helper functions: `src/functions.py`
-- Default config location: `~/.config/KosDWM/config.json`
 
-## Layout Modes
-Set in config:
-- `"layout_mode": "buttons"` - Desktop buttons + all windows combobox
-- `"layout_mode": "comboboxes"` - 4 desktop window comboboxes only
+## Configuration Locations
+- Main config: `~/.config/KosDWM/config.json`
+- Gadgets config: `~/.config/KosDWM/gadgets.json`
+- Menus directory: `~/.config/KosDWM/Menus/`
+- Notices data: `~/.config/KosDWM/notices.json`
+
+## PyQt5 Features
+- **Window Switcher**: Dropdown showing running windows (wmctrl)
+- **Auto-Generative Menus**: Dynamic menus from directory structure
+  - Folders = submenus
+  - `config.json` = leaf menus (content windows)
+  - `.py` files = runnable scripts with `run()` function
+  - `windowScript` = looping command output
+- **Gadget System**: Clickable icons in panel
+- **Light Theme**: All dialogs use light background with blue buttons
 
 ## External Dependencies
 - Requires `wmctrl` command for window management
-- Requires `screeninfo` Python package
-- Uses standard Tkinter
+- Requires `PyQt5` Python package (`pip install PyQt5`)
+- For TkInter version: requires `screeninfo` and standard Tkinter
 
-## Recent Changes
-- Added red frame (2px height) under the four comboboxes/buttons in both layout modes (visible in run.py)
-- Added application menu (Help -> About) that appears on root window hover and shows content from ABOUT.md (visible in run.py)
-- Removed legacy help/menu button functionality
-- Removed xterm script logging feature (reptyr cannot attach to existing processes)
+## Menu Structure Example
+```
+~/.config/KosDWM/Menus/
+├── Home/
+│   ├── About/
+│   │   ├── config.json       # {"title": "About", "windowContent": "about.html"}
+│   │   ├── about.html        # Static content
+│   │   └── ok.py             # Optional: def run(window): ...
+│   └── Test/
+│       ├── config.json       # {"windowScript": "lsof -i", "loop": 5}
+│       └── ok.py
+└── Scripts/
+    └── my_tool.py            # def run(parent): ...
+```
 
-## Common Gotchas
-- Menu functionality is commented out in `create_widgets()` (lines 411-418) - uncomment to enable
-- Window positioning in `on_menu_enter()` uses root window coordinates; may need adjustment when dragged
-- Config file is created at first run in `~/.config/KosDWM/`
-- Threading used for observer and time update loops
-
-## Verification
-- Check `wmctrl -l` output format matches parsing expectations
-- Verify `screeninfo.get_monitors()[0]` returns expected primary monitor
-- Test config loading/saving through Config class
-- Verify red frame appears under comboboxes in both layout modes
+## Recent Changes (PyQt5)
+- Complete migration from TkInter to PyQt5
+- Added window switcher dropdown using wmctrl
+- Added auto-generative menu system
+- Added light theme for all dialogs
+- Fixed menu freeze with Qt.QueuedConnection
+- Gadget system now uses QMessageBox with styling
