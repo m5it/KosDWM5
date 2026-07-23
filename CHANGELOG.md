@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2] - 2026-07-23
+
+### Changed
+- Auto-incremented version from 1.0.1
+- Files changed: HISTORY.md, __pycache__/AUTOVERSION.cpython-314.pyc, __pycache__/install_hooks.cpython-314.pyc, __pycache__/run.cpython-313.pyc, __pycache__/run.cpython-314.pyc and 24 more
+
+
 ## [1.0.1] - 2026-07-23
 
 ### Changed
