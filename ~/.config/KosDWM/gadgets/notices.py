@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Notices Gadget for KosDWM
 ==========================
@@ -7,8 +8,66 @@ Includes HTTP API for external access and notification system.
 """
 
 import sys
+import os
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "adata2" / "OurAI" / "playground" / "KosDWM"))
+
+def find_kosdwm_path():
+    """
+    Find the KosDWM installation directory.
+    Checks in order:
+    1. KOSDWM_HOME environment variable
+    2. ~/.config/KosDWM/kosdwm_path.conf file
+    3. Common locations
+    4. Fallback to relative path from gadget location
+    """
+    # 1. Check environment variable
+    if 'KOSDWM_HOME' in os.environ:
+        path = Path(os.environ['KOSDWM_HOME'])
+        if path.exists():
+            return path
+    
+    # 2. Check config file
+    config_path = Path.home() / ".config" / "KosDWM" / "kosdwm_path.conf"
+    if config_path.exists():
+        try:
+            with open(config_path, 'r') as f:
+                path = Path(f.read().strip())
+                if path.exists():
+                    return path
+        except:
+            pass
+    
+    # 3. Try common locations
+    common_paths = [
+        Path.home() / "Projects" / "KosDWM",
+        Path.home() / "workspace" / "KosDWM",
+        Path.home() / "code" / "KosDWM",
+        Path.home() / "KosDWM",
+        Path("/opt/KosDWM"),
+        Path("/usr/local/share/KosDWM"),
+    ]
+    
+    for path in common_paths:
+        if (path / "src").exists():
+            return path
+    
+    # 4. Fallback: try to find relative to this file
+    # This gadget is at: ~/.config/KosDWM/gadgets/notices.py
+    # KosDWM should be at: ~/.config/KosDWM/ (which contains src/)
+    gadget_dir = Path(__file__).parent
+    kosdwm_path = gadget_dir.parent
+    
+    if (kosdwm_path / "src").exists():
+        return kosdwm_path
+    
+    raise RuntimeError(
+        "Could not find KosDWM installation. Please set KOSDWM_HOME environment variable "
+        "or create ~/.config/KosDWM/kosdwm_path.conf with the path to KosDWM."
+    )
+
+# Add KosDWM to Python path
+KOSDWM_PATH = find_kosdwm_path()
+sys.path.insert(0, str(KOSDWM_PATH))
 
 from src.gadgets import GadgetBase
 from src.notices_store import NoticesStore, Notice

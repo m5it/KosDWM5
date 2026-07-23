@@ -308,3 +308,504 @@ for f in files:
         for k, v in result.items():
             print(f'  {k}: {v}')
  | SUCCESS: True | OUTPUT_LEN: 452
+[2026-07-23 17:00:36] CMD: python -c 
+import re
+with open('run.py', 'r') as f:
+    lines = f.readlines()
+
+print('Searching for gadget-related code in run.py...')
+for i, line in enumerate(lines, 1):
+    if 'gadget' in line.lower() or 'Gadget' in line:
+        print(f'{i:4d}: {line.rstrip()}')
+ | SUCCESS: True | OUTPUT_LEN: 1675
+[2026-07-23 17:08:33] CMD: python -c 
+with open('~/.config/KosDWM/install_kosdwm.py', 'r') as f:
+    content = f.read()
+    
+# Find lines with launcher or script creation
+lines = content.split('\n')
+for i, line in enumerate(lines, 1):
+    if any(keyword in line.lower() for keyword in ['launcher', 'script', 'kosdwm_home', 'def install']):
+        print(f'{i:4d}: {line}')
+ | SUCCESS: True | OUTPUT_LEN: 1907
+[2026-07-23 17:08:42] CMD: python -c 
+from pathlib import Path
+import os
+
+# Check current directory
+cwd = Path.cwd()
+print(f'Current directory: {cwd}')
+
+# Check if src exists here
+if (cwd / 'src').exists():
+    print('✓ src/ exists in current directory')
+    src_files = list((cwd / 'src').glob('*.py'))
+    print(f'  Files: {[f.name for f in src_files[:5]]}')
+else:
+    print('✗ src/ NOT in current directory')
+
+# Check common locations
+home = Path.home()
+locations = [
+    home / 'Projects' / 'KosDWM',
+    home / 'workspace' / 'KosDWM',
+    home / 'KosDWM',
+    home / 'kosdwm',
+    Path('/opt/KosDWM'),
+]
+
+print('\nChecking common locations:')
+for loc in locations:
+    if loc.exists():
+        has_src = (loc / 'src').exists()
+        print(f'  {loc}: {"✓ has src" if has_src else "✗ no src"}') 
+ | SUCCESS: True | OUTPUT_LEN: 210
+[2026-07-23 17:08:50] CMD: python -c 
+import os
+from pathlib import Path
+
+# Check if KOSDWM_HOME is set
+kosdwm_home = os.environ.get('KOSDWM_HOME', 'NOT SET')
+print(f'KOSDWM_HOME environment variable: {kosdwm_home}')
+
+# Check for config file
+config_path = Path.home() / '.config' / 'KosDWM' / 'kosdwm_path.conf'
+if config_path.exists():
+    with open(config_path) as f:
+        print(f'kosdwm_path.conf exists: {f.read().strip()}')
+else:
+    print(f'kosdwm_path.conf: NOT FOUND at {config_path}')
+    
+# Check current KosDWM source
+cwd = Path.cwd()
+print(f'\nCurrent KosDWM source: {cwd}')
+print(f'Has src/: {(cwd / "src").exists()}')
+ | SUCCESS: True | OUTPUT_LEN: 197
+[2026-07-23 17:09:00] CMD: python install_kosdwm.py --user | SUCCESS: True | OUTPUT_LEN: 131
+[2026-07-23 17:09:02] CMD: python ~/.config/KosDWM/install_kosdwm.py --user | SUCCESS: True | OUTPUT_LEN: 107
+[2026-07-23 17:09:07] CMD: cp ~/.config/KosDWM/install_kosdwm.py /home/t3ch/adata2/OurAI/playground/KosDWM/install_kosdwm.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-23 17:09:09] CMD: python install_kosdwm.py --user | SUCCESS: True | OUTPUT_LEN: 90
+[2026-07-23 17:09:14] CMD: python -c 
+from pathlib import Path
+cwd = Path.cwd()
+print(f'Checking: {cwd}')
+
+# Check what the installer looks for
+checks = [
+    ('src/kosdwm.py', (cwd / 'src' / 'kosdwm.py').exists()),
+    ('src/gadgets.py', (cwd / 'src' / 'gadgets.py').exists()),
+    ('run.py', (cwd / 'run.py').exists()),
+]
+
+for name, exists in checks:
+    print(f'  {name}: {\"✓\" if exists else \"✗\"}')
+
+# List src contents
+print('\nsrc/ directory:')
+src = cwd / 'src'
+if src.exists():
+    for f in src.glob('*.py'):
+        print(f'  {f.name}')
+ | SUCCESS: True | OUTPUT_LEN: 182
+[2026-07-23 17:09:17] CMD: python -c 
+from pathlib import Path
+cwd = Path.cwd()
+print(f'Checking: {cwd}')
+
+# Check what the installer looks for
+checks = [
+    ('src/kosdwm.py', (cwd / 'src' / 'kosdwm.py').exists()),
+    ('src/gadgets.py', (cwd / 'src' / 'gadgets.py').exists()),
+    ('run.py', (cwd / 'run.py').exists()),
+]
+
+for name, exists in checks:
+    status = '✓' if exists else '✗'
+    print(f'  {name}: {status}')
+
+# List src contents
+print('\nsrc/ directory:')
+src = cwd / 'src'
+if src.exists():
+    for f in src.glob('*.py'):
+        print(f'  {f.name}')
+ | SUCCESS: True | OUTPUT_LEN: 242
+[2026-07-23 17:09:27] CMD: head -50 install_kosdwm.py | SUCCESS: True | OUTPUT_LEN: 1340
+[2026-07-23 17:09:31] CMD: python -c 
+import os
+import sys
+from pathlib import Path
+
+# Import the installer's find_kosdwm_source function
+exec(open('install_kosdwm.py').read().split('def check_dependencies')[0])
+
+source = find_kosdwm_source()
+print(f'Found source: {source}')
+ | SUCCESS: True | OUTPUT_LEN: 235
+[2026-07-23 17:09:38] CMD: sed -i s/(path \/ "src" \/ "kosdwm.py").exists()/(path \/ "run.py").exists() or (path \/ "src" \/ "kosdwm.py").exists()/g install_kosdwm.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-23 17:09:40] CMD: python install_kosdwm.py --user | SUCCESS: True | OUTPUT_LEN: 90
+[2026-07-23 17:09:42] CMD: grep -n def find_kosdwm_source -A 40 install_kosdwm.py | SUCCESS: True | OUTPUT_LEN: 1336
+[2026-07-23 17:09:45] CMD: sed -i s/if (cwd \/ "src" \/ "kosdwm.py").exists():/if (cwd \/ "run.py").exists() or (cwd \/ "src" \/ "kosdwm.py").exists():/ install_kosdwm.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-23 17:09:47] CMD: python install_kosdwm.py --user | SUCCESS: True | OUTPUT_LEN: 90
+[2026-07-23 17:09:48] CMD: grep -n Does not appear -B 5 -A 5 install_kosdwm.py | SUCCESS: True | OUTPUT_LEN: 438
+[2026-07-23 17:09:50] CMD: sed -i s/if not (source \/ "src" \/ "kosdwm.py").exists():/if not ((source \/ "run.py").exists() or (source \/ "src" \/ "kosdwm.py").exists()):/ install_kosdwm.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-23 17:09:52] CMD: python install_kosdwm.py --user | SUCCESS: True | OUTPUT_LEN: 1340
+[2026-07-23 17:09:54] CMD: cat ~/.local/bin/kosdwm | SUCCESS: True | OUTPUT_LEN: 62
+[2026-07-23 17:09:56] CMD: ls -la ~/.local/bin/ | SUCCESS: True | OUTPUT_LEN: 87
+[2026-07-23 17:10:01] CMD: python -c from pathlib import Path; print(list((Path.home() / '.local' / 'bin').glob('*'))) | SUCCESS: True | OUTPUT_LEN: 1755
+[2026-07-23 17:10:03] CMD: python -c 
+from pathlib import Path
+launcher = Path.home() / '.local' / 'bin' / 'kosdwm'
+with open(launcher) as f:
+    print('=== kosdwm launcher ===')
+    print(f.read())
+ | SUCCESS: True | OUTPUT_LEN: 885
+[2026-07-23 17:10:06] CMD: python -c 
+from pathlib import Path
+launcher = Path.home() / '.local' / 'bin' / 'kosdwm-panel'
+with open(launcher) as f:
+    print('=== kosdwm-panel launcher ===')
+    print(f.read())
+ | SUCCESS: True | OUTPUT_LEN: 595
+[2026-07-23 17:10:09] CMD: python -c 
+from pathlib import Path
+config = Path.home() / '.config' / 'KosDWM' / 'kosdwm_path.conf'
+if config.exists():
+    print('kosdwm_path.conf exists:')
+    print(f'  Content: {config.read_text().strip()}')
+else:
+    print('kosdwm_path.conf NOT found')
+ | SUCCESS: True | OUTPUT_LEN: 27
+[2026-07-23 17:10:12] CMD: python -c 
+from pathlib import Path
+config_dir = Path.home() / '.config' / 'KosDWM'
+print(f'Config dir: {config_dir}')
+print(f'Exists: {config_dir.exists()}')
+if config_dir.exists():
+    print(f'Contents: {list(config_dir.iterdir())}')
+ | SUCCESS: True | OUTPUT_LEN: 488
+[2026-07-23 17:10:17] CMD: python -c 
+from pathlib import Path
+config = Path.home() / '.config' / 'KosDWM' / 'kosdwm_path.conf'
+print(f'Config file exists: {config.exists()}')
+if config.exists():
+    print(f'Content: {config.read_text().strip()}')
+ | SUCCESS: True | OUTPUT_LEN: 76
+[2026-07-23 17:10:46] CMD: python kosdwm_diagnose.py | SUCCESS: True | OUTPUT_LEN: 3469
+[2026-07-23 17:10:52] CMD: python -c 
+from pathlib import Path
+import json
+
+config_path = Path.home() / '.config' / 'KosDWM' / 'gadgets.json'
+print(f'Path: {config_path}')
+print(f'Exists: {config_path.exists()}')
+
+if config_path.exists():
+    with open(config_path) as f:
+        config = json.load(f)
+        print(f'Content: {json.dumps(config, indent=2)}')
+else:
+    print('File not found')
+ | SUCCESS: True | OUTPUT_LEN: 108
+[2026-07-23 17:10:56] CMD: python -c 
+from pathlib import Path
+import json
+
+config_path = Path.home() / '.config' / 'KosDWM' / 'gadgets.json'
+with open(config_path) as f:
+    config = json.load(f)
+
+# Enable test_gadget if not already enabled
+if 'test_gadget' not in config['enabled']:
+    config['enabled'].append('test_gadget')
+    with open(config_path, 'w') as f:
+        json.dump(config, f, indent=2)
+    print('Added test_gadget to enabled gadgets')
+else:
+    print('test_gadget already enabled')
+
+print(f'Enabled gadgets: {config[\"enabled\"]}')
+ | SUCCESS: True | OUTPUT_LEN: 196
+[2026-07-23 17:10:58] CMD: python -c 
+from pathlib import Path
+import json
+
+config_path = Path.home() / '.config' / 'KosDWM' / 'gadgets.json'
+with open(config_path) as f:
+    config = json.load(f)
+
+# Enable test_gadget if not already enabled
+if 'test_gadget' not in config['enabled']:
+    config['enabled'].append('test_gadget')
+    with open(config_path, 'w') as f:
+        json.dump(config, f, indent=2)
+    print('Added test_gadget to enabled gadgets')
+else:
+    print('test_gadget already enabled')
+
+print('Enabled gadgets:', config['enabled'])
+ | SUCCESS: True | OUTPUT_LEN: 85
+[2026-07-23 17:11:04] CMD: head -20 ~/.config/KosDWM/gadgets/hello_world.py | SUCCESS: True | OUTPUT_LEN: 743
+[2026-07-23 17:11:21] CMD: head -15 ~/.config/KosDWM/gadgets/test_gadget.py | SUCCESS: True | OUTPUT_LEN: 291
+[2026-07-23 17:11:30] CMD: python kosdwm_diagnose.py | SUCCESS: True | OUTPUT_LEN: 3578
+[2026-07-23 17:11:33] CMD: grep -c find_kosdwm_path ~/.config/KosDWM/gadgets/hello_world.py ~/.config/KosDWM/gadgets/test_gadget.py | SUCCESS: True | OUTPUT_LEN: 84
+[2026-07-23 17:11:36] CMD: sed -i s/if .sys.path.insert. in content:/if "sys.path.insert" in content and "find_kosdwm_path" not in content:/ kosdwm_diagnose.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-23 17:11:39] CMD: python kosdwm_diagnose.py | SUCCESS: True | OUTPUT_LEN: 3578
+[2026-07-23 17:11:42] CMD: python -c 
+with open('kosdwm_diagnose.py', 'r') as f:
+    content = f.read()
+
+# Fix the check for hardcoded paths
+old_check = 'if \'sys.path.insert\' in content:'
+new_check = 'if "sys.path.insert" in content and "find_kosdwm_path" not in content:'
+content = content.replace(old_check, new_check)
+
+with open('kosdwm_diagnose.py', 'w') as f:
+    f.write(content)
+
+print('Fixed diagnostic script')
+ | SUCCESS: True | OUTPUT_LEN: 24
+[2026-07-23 17:11:44] CMD: grep -n sys.path.insert kosdwm_diagnose.py | SUCCESS: True | OUTPUT_LEN: 109
+[2026-07-23 17:11:47] CMD: python kosdwm_diagnose.py | SUCCESS: True | OUTPUT_LEN: 3578
+[2026-07-23 17:11:50] CMD: python -c 
+from pathlib import Path
+
+gadget_file = Path.home() / '.config' / 'KosDWM' / 'gadgets' / 'hello_world.py'
+content = gadget_file.read_text()
+
+print('Has sys.path.insert:', 'sys.path.insert' in content)
+print('Has find_kosdwm_path:', 'find_kosdwm_path' in content)
+print('Should show warning:', 'sys.path.insert' in content and 'find_kosdwm_path' not in content)
+ | SUCCESS: True | OUTPUT_LEN: 80
+[2026-07-23 17:11:53] CMD: grep -c find_kosdwm_path ~/.config/KosDWM/gadgets/hello_world.py | SUCCESS: True | OUTPUT_LEN: 2
+[2026-07-23 17:11:55] CMD: python -c 
+from pathlib import Path
+gadget_file = Path.home() / '.config' / 'KosDWM' / 'gadgets' / 'hello_world.py'
+content = gadget_file.read_text()
+print('Content length:', len(content))
+print('First 500 chars:', repr(content[:500]))
+ | SUCCESS: True | OUTPUT_LEN: 558
+[2026-07-23 17:12:02] CMD: python kosdwm_diagnose.py | SUCCESS: True | OUTPUT_LEN: 3578
+[2026-07-23 17:12:05] CMD: python -c 
+from pathlib import Path
+
+gf = Path.home() / '.config' / 'KosDWM' / 'gadgets' / 'hello_world.py'
+content = gf.read_text()
+
+print('Has sys.path.insert:', 'sys.path.insert' in content)
+print('Has find_kosdwm_path:', 'find_kosdwm_path' in content)
+print('Has find_kosdwm_path def:', 'def find_kosdwm_path' in content)
+print()
+print('First 30 lines:')
+for i, line in enumerate(content.split('\n')[:30], 1):
+    print(f'{i:2d}: {line}')
+ | SUCCESS: True | OUTPUT_LEN: 973
+[2026-07-23 17:12:13] CMD: python kosdwm_diagnose.py | SUCCESS: True | OUTPUT_LEN: 3578
+[2026-07-23 17:12:15] CMD: python -c 
+from pathlib import Path
+gf = Path.home() / '.config' / 'KosDWM' / 'gadgets' / 'hello_world.py'
+content = gf.read_text()
+print('Has find_kosdwm_path def:', 'def find_kosdwm_path' in content)
+print('File size:', len(content))
+ | SUCCESS: True | OUTPUT_LEN: 48
+[2026-07-23 17:12:17] CMD: cat ~/.config/KosDWM/gadgets/hello_world.py | head -20 | SUCCESS: True | OUTPUT_LEN: 185
+[2026-07-23 17:12:20] CMD: python -c 
+from pathlib import Path
+gf = Path.home() / '.config' / 'KosDWM' / 'gadgets' / 'hello_world.py'
+with open(gf) as f:
+    lines = f.readlines()
+print('First 20 lines:')
+for i, line in enumerate(lines[:20], 1):
+    print(f'{i:2d}: {line.rstrip()}')
+ | SUCCESS: True | OUTPUT_LEN: 623
+[2026-07-23 17:12:26] CMD: python -c 
+# Create the file content
+content = '''#!/usr/bin/env python3
+"""
+KosDWM Gadget Example - Hello World
+"""
+
+import sys
+import os
+from pathlib import Path
+
+def find_kosdwm_path():
+    """Find the KosDWM installation directory."""
+    if 'KOSDWM_HOME' in os.environ:
+        path = Path(os.environ['KOSDWM_HOME'])
+        if path.exists():
+            return path
+    
+    config_path = Path.home() / '.config' / 'KosDWM' / 'kosdwm_path.conf'
+    if config_path.exists():
+        try:
+            with open(config_path, 'r') as f:
+                path = Path(f.read().strip())
+                if path.exists():
+                    return path
+        except:
+            pass
+    
+    common_paths = [
+        Path.home() / 'Projects' / 'KosDWM',
+        Path.home() / 'workspace' / 'KosDWM',
+        Path.home() / 'code' / 'KosDWM',
+        Path.home() / 'KosDWM',
+        Path('/opt/KosDWM'),
+        Path('/usr/local/share/KosDWM'),
+    ]
+    
+    for path in common_paths:
+        if (path / 'src').exists():
+            return path
+    
+    gadget_dir = Path(__file__).parent
+    kosdwm_path = gadget_dir.parent
+    
+    if (kosdwm_path / 'src').exists():
+        return kosdwm_path
+    
+    raise RuntimeError('Could not find KosDWM installation.')
+
+KOSDWM_PATH = find_kosdwm_path()
+sys.path.insert(0, str(KOSDWM_PATH / 'src'))
+
+from gadgets import GadgetBase
+import tkinter as tk
+
+
+class HelloWorldGadget(GadgetBase):
+    def __init__(self):
+        super().__init__()
+        self.click_count = 0
+    
+    def get_name(self):
+        return 'hello_world'
+    
+    def get_icon(self):
+        return 'Hello'
+    
+    def get_tooltip(self):
+        return 'Click to say hello!'
+    
+    def get_description(self):
+        return 'A simple example gadget.'
+    
+    def on_click(self, event=None):
+        self.click_count += 1
+        window = tk.Toplevel()
+        window.title('Hello from KosDWM!')
+        window.geometry('300x150')
+        window.transient()
+        tk.Label(window, text=f'Hello! Clicked {self.click_count} times.', font=('Arial', 14), pady=20).pack()
+        tk.Button(window, text='OK', command=window.destroy, width=10).pack(pady=10)
+        return True
+
+
+gadget = HelloWorldGadget()
+'''
+
+# Write to file
+from pathlib import Path
+gf = Path.home() / '.config' / 'KosDWM' / 'gadgets' / 'hello_world.py'
+with open(gf, 'w') as f:
+    f.write(content)
+
+print('File written, size:', gf.stat().st_size)
+print('Has find_kosdwm_path:', 'def find_kosdwm_path' in gf.read_text())
+ | SUCCESS: True | OUTPUT_LEN: 52
+[2026-07-23 17:12:28] CMD: python kosdwm_diagnose.py | SUCCESS: True | OUTPUT_LEN: 3561
+[2026-07-23 17:12:33] CMD: python -c 
+# Create the file content
+content = '''#!/usr/bin/env python3
+"""
+Test Gadget for KosDWM
+"""
+
+import sys
+import os
+from pathlib import Path
+
+def find_kosdwm_path():
+    """Find the KosDWM installation directory."""
+    if 'KOSDWM_HOME' in os.environ:
+        path = Path(os.environ['KOSDWM_HOME'])
+        if path.exists():
+            return path
+    
+    config_path = Path.home() / '.config' / 'KosDWM' / 'kosdwm_path.conf'
+    if config_path.exists():
+        try:
+            with open(config_path, 'r') as f:
+                path = Path(f.read().strip())
+                if path.exists():
+                    return path
+        except:
+            pass
+    
+    common_paths = [
+        Path.home() / 'Projects' / 'KosDWM',
+        Path.home() / 'workspace' / 'KosDWM',
+        Path.home() / 'code' / 'KosDWM',
+        Path.home() / 'KosDWM',
+        Path('/opt/KosDWM'),
+        Path('/usr/local/share/KosDWM'),
+    ]
+    
+    for path in common_paths:
+        if (path / 'src').exists():
+            return path
+    
+    gadget_dir = Path(__file__).parent
+    kosdwm_path = gadget_dir.parent
+    
+    if (kosdwm_path / 'src').exists():
+        return kosdwm_path
+    
+    raise RuntimeError('Could not find KosDWM installation.')
+
+KOSDWM_PATH = find_kosdwm_path()
+sys.path.insert(0, str(KOSDWM_PATH / 'src'))
+
+from gadgets import GadgetBase
+from tkinter import messagebox
+
+
+class TestGadget(GadgetBase):
+    def __init__(self):
+        super().__init__()
+    
+    def get_name(self):
+        return 'test_gadget'
+    
+    def get_icon(self):
+        return 'Test'
+    
+    def get_tooltip(self):
+        return 'Click to test the gadget system'
+    
+    def get_description(self):
+        return 'A test gadget to verify KosDWM gadget loading works.'
+    
+    def on_click(self, event=None):
+        messagebox.showinfo(
+            'Test Gadget',
+            'Gadget system is working!\\n\\n'
+            f'KOSDWM_HOME: {KOSDWM_PATH}\\n'
+            'Python path includes: src/'
+        )
+        return True
+
+
+gadget = TestGadget()
+'''
+
+# Write to file
+from pathlib import Path
+gf = Path.home() / '.config' / 'KosDWM' / 'gadgets' / 'test_gadget.py'
+with open(gf, 'w') as f:
+    f.write(content)
+
+print('test_gadget.py written, size:', gf.stat().st_size)
+ | SUCCESS: True | OUTPUT_LEN: 35
+[2026-07-23 17:12:35] CMD: python kosdwm_diagnose.py | SUCCESS: True | OUTPUT_LEN: 3544

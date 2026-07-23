@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.8] - 2026-07-23
+
+### Changed
+- Auto-incremented version from 1.0.7
+- Files changed: HISTORY.md, PLAN.md, __pycache__/kosdwm_diagnose.cpython-314.pyc, background.log, current_task.txt and 13 more
+
+
 ## [1.0.7] - 2026-07-23
 
 ### Changed

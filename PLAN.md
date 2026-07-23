@@ -1,50 +1,23 @@
-# Plan: KosDWM Auto-Versioning System
-## ID: 1784740748.9778647
-## Created: 2026-07-22 17:19:08
-## Status: completed
+# Plan: Fix Gadget System and Installation
+## ID: 1784825969.5698082
+## Created: 2026-07-23 16:59:29
+## Status: in_progress
 
 ### Goal:
-Implement auto-versioning for KosDWM similar to KosDB project. This includes creating AUTOVERSION.py, pre-commit git hooks, and integrating version display.
+Fix the gadget system so buttons appear in panel, ensure notices gadget works, and restore proper KosDWM installation system with correct paths
 
-### Tasks (12):
-1. [completed] Create the data model for notices with fields: id, title, co
-   ID: 1784740762.554535
-   Progress logs: 2 entries
+### Tasks (4):
+1. [pending] Diagnose why gadget buttons don't appear in panel
+   ID: 1784825973.9373271
 
-2. [completed] Create the NoticesGadget class in ~/.config/KosDWM/gadgets/n
-   ID: 1784740762.554726
-   Progress logs: 1 entries
+2. [pending] Fix notices gadget import path
+   ID: 1784825977.8610802
 
-3. [completed] Create src/notices_api.py with a Flask-based HTTP API server
-   ID: 1784740762.5927851
-   Progress logs: 1 entries
+3. [pending] Restore KosDWM installation system
+   ID: 1784825982.7369719
 
-4. [completed] Update the NoticesGadget to integrate with the HTTP API: (1)
-   ID: 1784740762.59294
-
-5. [completed] Create a reminder notification system: (1) Add a ReminderThr
-   ID: 1784740762.5930564
-
-6. [completed] Create a comprehensive GUI for managing notices: (1) Main wi
-   ID: 1784740762.5931733
-
-7. [completed] Test the complete system: (1) Verify notices gadget appears 
-   ID: 1784740762.5932868
-
-8. [pending] Create AUTOVERSION.py
-   ID: 1784823312.594002
-
-9. [pending] Create pre-commit git hook
-   ID: 1784823316.2783623
-
-10. [pending] Create install_hooks.py helper
-   ID: 1784823319.174383
-
-11. [pending] Update gadgets.py with version display
-   ID: 1784823322.0744927
-
-12. [pending] Create CHANGELOG.md template
-   ID: 1784823327.1693523
+4. [pending] Create setup verification script
+   ID: 1784825986.4827363
 
 ---
 
