@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.5] - 2026-07-23
+
+### Changed
+- Auto-incremented version from 1.0.4
+- Files changed: .gitignore
+
+
 ## [1.0.4] - 2026-07-23
 
 ### Changed

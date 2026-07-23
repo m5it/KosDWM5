@@ -1,1 +1,4 @@
 test
+*.heapsnapshot
+*.log
+run.out
