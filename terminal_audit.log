@@ -30,3 +30,8 @@
 [2026-07-22 17:27:20] CMD: cd /home/t3ch/adata2/OurAI/playground/KosDWM | SUCCESS: True | OUTPUT_LEN: 52
 [2026-07-22 17:27:22] CMD: python test_notices_system.py | SUCCESS: True | OUTPUT_LEN: 207
 [2026-07-22 17:28:14] CMD: python test_notices_system.py | SUCCESS: True | OUTPUT_LEN: 3746
+[2026-07-22 17:43:36] CMD: ls -la ~/.config/KosDWM/gadgets/ | SUCCESS: True | OUTPUT_LEN: 547
+[2026-07-23 16:19:47] CMD: chmod +x .git/hooks/pre-commit | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-23 16:19:49] CMD: ls -la .git/hooks/pre-commit | SUCCESS: True | OUTPUT_LEN: 63
+[2026-07-23 16:20:16] CMD: chmod +x install_hooks.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-23 16:20:19] CMD: ls -la install_hooks.py | SUCCESS: True | OUTPUT_LEN: 58

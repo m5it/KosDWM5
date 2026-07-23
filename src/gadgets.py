@@ -13,6 +13,16 @@ import inspect
 from pathlib import Path
 from abc import ABC, abstractmethod
 
+# Import version from AUTOVERSION.py
+try:
+    # Try to import from parent directory (where AUTOVERSION.py is)
+    parent_dir = Path(__file__).parent.parent
+    if str(parent_dir) not in sys.path:
+        sys.path.insert(0, str(parent_dir))
+    from AUTOVERSION import VERSION as KOSDWM_VERSION
+except ImportError:
+    KOSDWM_VERSION = "unknown"
+
 
 class GadgetBase(ABC):
     """
@@ -60,45 +70,38 @@ class HelloWorldGadget(GadgetBase):
         return "Click to see Hello World message"
     
     def get_description(self) -> str:
-        return "A simple example gadget that shows a greeting message."
+        return f"A simple example gadget. KosDWM v{KOSDWM_VERSION}"
     
     def on_click(self, event=None):
         """Show Hello World alert when clicked."""
-        messagebox.showinfo("Hello World", "Hello World!")
+        messagebox.showinfo(
+            "Hello World", 
+            f"Hello from KosDWM v{KOSDWM_VERSION}!\n\nClick to continue."
+        )
 
 
 class GadgetManager:
     """
     Manages gadget registration, configuration, and instantiation.
-    Loads and saves gadget configuration to ~/.config/KosDWM/gadgets.json
-    Discovers gadgets from ~/.config/KosDWM/gadgets/ directory.
     """
     
     def __init__(self):
-        self._available_gadgets = {}  # name -> gadget class
-        self._gadget_sources = {}     # name -> source info (built-in or file path)
-        self._load_errors = []        # list of errors during loading
-        self._enabled_gadgets = set()  # set of enabled gadget names
+        self._available_gadgets = {}
+        self._gadget_sources = {}
+        self._load_errors = []
+        self._enabled_gadgets = set()
         self._config_path = Path.home() / ".config" / "KosDWM" / "gadgets.json"
         self._gadgets_dir = Path.home() / ".config" / "KosDWM" / "gadgets"
         
-        # Ensure gadgets directory exists
         self._ensure_gadgets_dir()
-        
-        # Register built-in gadgets
         self._register_builtin_gadgets()
-        
-        # Discover and register gadgets from scripts
         self._discover_gadgets()
-        
-        # Load configuration
         self._load_config()
     
     def _ensure_gadgets_dir(self):
         """Create the gadgets directory if it doesn't exist."""
         try:
             self._gadgets_dir.mkdir(parents=True, exist_ok=True)
-            print(f"Gadgets directory: {self._gadgets_dir}")
         except IOError as e:
             print(f"Error creating gadgets directory: {e}")
     
@@ -111,106 +114,58 @@ class GadgetManager:
         self._load_errors.clear()
         
         if not self._gadgets_dir.exists():
-            self._load_errors.append("Gadgets directory does not exist")
             return
         
-        # Find all .py files in gadgets directory (not starting with _)
         py_files = [f for f in self._gadgets_dir.iterdir() 
                     if f.is_file() and f.suffix == '.py' and not f.name.startswith('_')]
-        
-        print(f"Found {len(py_files)} gadget script(s) to load")
         
         for py_file in py_files:
             self._load_gadget_module(py_file)
     
     def _load_gadget_module(self, file_path: Path):
-        """
-        Load a gadget module from a file path.
-        
-        Args:
-            file_path: Path to the Python file containing the gadget
-        """
+        """Load a gadget module from a file path."""
         try:
             module_name = f"gadget_{file_path.stem}"
-            
-            # Load the module
             spec = importlib.util.spec_from_file_location(module_name, file_path)
             if spec is None or spec.loader is None:
-                error_msg = f"Failed to load spec from {file_path.name}"
-                self._load_errors.append(error_msg)
-                print(error_msg)
                 return
             
             module = importlib.util.module_from_spec(spec)
             
-            # Add project root to path for imports (src.gadgets)
             project_root = Path(__file__).parent.parent
             if str(project_root) not in sys.path:
                 sys.path.insert(0, str(project_root))
             
-            # Add gadgets dir to path temporarily for imports
             if str(self._gadgets_dir) not in sys.path:
                 sys.path.insert(0, str(self._gadgets_dir))
             
             spec.loader.exec_module(module)
-            
-            # Find GadgetBase subclasses in the module
             gadget_classes = self._find_gadget_classes(module)
             
-            if not gadget_classes:
-                error_msg = f"No gadget classes found in {file_path.name}"
-                self._load_errors.append(error_msg)
-                print(error_msg)
-                return
-            
-            # Register each found gadget class
             for gadget_class in gadget_classes:
                 try:
                     self.register_gadget(gadget_class, source=str(file_path))
-                    print(f"Registered gadget '{gadget_class.__name__}' from {file_path.name}")
-                except ValueError as e:
-                    error_msg = f"Failed to register gadget from {file_path.name}: {e}"
-                    self._load_errors.append(error_msg)
-                    print(error_msg)
+                except ValueError:
+                    pass
                     
         except Exception as e:
-            error_msg = f"Error loading {file_path.name}: {str(e)}"
-            self._load_errors.append(error_msg)
-            print(error_msg)
+            self._load_errors.append(f"Error loading {file_path.name}: {str(e)}")
     
     def _find_gadget_classes(self, module):
-        """
-        Find all GadgetBase subclasses in a module.
-        
-        Args:
-            module: The loaded module to inspect
-            
-        Returns:
-            List of GadgetBase subclasses found
-        """
+        """Find all GadgetBase subclasses in a module."""
         classes = []
-        
         for name, obj in inspect.getmembers(module, inspect.isclass):
-            # Check if it's a subclass of GadgetBase but not GadgetBase itself
             if (issubclass(obj, GadgetBase) and 
                 obj is not GadgetBase and
                 obj.__module__ == module.__name__):
                 classes.append(obj)
-        
         return classes
     
     def register_gadget(self, gadget_class, source="unknown"):
-        """
-        Register a new gadget class.
-        
-        Args:
-            gadget_class: Class that extends GadgetBase
-            source: Source identifier (built-in, file path, etc.)
-        """
+        """Register a new gadget class."""
         if not issubclass(gadget_class, GadgetBase):
             raise ValueError(f"Gadget class must extend GadgetBase: {gadget_class}")
         
-        # Create temporary instance to get the name
         temp_instance = gadget_class()
         name = temp_instance.get_name()
         
@@ -218,7 +173,7 @@ class GadgetManager:
         self._gadget_sources[name] = source
     
     def get_gadget_source(self, gadget_name: str) -> str:
-        """Get the source of a gadget (built-in or file path)."""
+        """Get the source of a gadget."""
         return self._gadget_sources.get(gadget_name, "unknown")
     
     def get_load_errors(self) -> list:
@@ -227,7 +182,6 @@ class GadgetManager:
     
     def reload_gadgets(self):
         """Reload all gadgets from disk."""
-        # Clear discovered gadgets but keep built-ins
         built_ins = {name: cls for name, cls in self._available_gadgets.items() 
                      if self._gadget_sources.get(name) == "built-in"}
         
@@ -235,18 +189,12 @@ class GadgetManager:
         self._gadget_sources = {name: src for name, src in self._gadget_sources.items() 
                                if src == "built-in"}
         
-        # Clear errors
         self._load_errors.clear()
-        
-        # Re-discover
         self._discover_gadgets()
         
-        # Clean up enabled set - remove gadgets that no longer exist
         self._enabled_gadgets = {name for name in self._enabled_gadgets 
                                 if name in self._available_gadgets}
         self._save_config()
-        
-        print("Gadgets reloaded")
     
     def enable_gadget(self, gadget_name: str):
         """Enable a gadget by name."""
@@ -264,21 +212,11 @@ class GadgetManager:
         return gadget_name in self._enabled_gadgets
     
     def get_available_gadgets(self) -> list:
-        """
-        Get list of all available gadget names.
-        
-        Returns:
-            List of gadget name strings
-        """
+        """Get list of all available gadget names."""
         return list(self._available_gadgets.keys())
     
     def get_enabled_gadgets(self) -> list:
-        """
-        Get instances of all enabled gadgets.
-        
-        Returns:
-            List of instantiated gadget objects
-        """
+        """Get instances of all enabled gadgets."""
         gadgets = []
         for name in self._enabled_gadgets:
             if name in self._available_gadgets:
@@ -287,12 +225,7 @@ class GadgetManager:
         return gadgets
     
     def get_gadget_info(self, gadget_name: str) -> dict:
-        """
-        Get information about a gadget.
-        
-        Returns:
-            Dict with name, description, icon, tooltip, enabled status, source
-        """
+        """Get information about a gadget."""
         if gadget_name not in self._available_gadgets:
             return None
         
@@ -300,7 +233,6 @@ class GadgetManager:
         instance = gadget_class()
         source = self.get_gadget_source(gadget_name)
         
-        # Format source for display
         if source == "built-in":
             source_display = "built-in"
             source_path = None
@@ -321,7 +253,6 @@ class GadgetManager:
     def _load_config(self):
         """Load gadget configuration from file."""
         if not self._config_path.exists():
-            # First run - enable hello_world by default
             self._enabled_gadgets = {"hello_world"}
             self._save_config()
             return
@@ -330,48 +261,39 @@ class GadgetManager:
             with open(self._config_path, 'r') as f:
                 config = json.load(f)
                 self._enabled_gadgets = set(config.get("enabled", []))
-        except (json.JSONDecodeError, IOError) as e:
-            print(f"Error loading gadget config: {e}, using defaults")
+        except (json.JSONDecodeError, IOError):
             self._enabled_gadgets = {"hello_world"}
     
     def _save_config(self):
         """Save gadget configuration to file."""
         try:
             self._config_path.parent.mkdir(parents=True, exist_ok=True)
-            config = {
-                "enabled": list(self._enabled_gadgets)
-            }
+            config = {"enabled": list(self._enabled_gadgets)}
             with open(self._config_path, 'w') as f:
                 json.dump(config, f, indent=4)
-        except IOError as e:
-            print(f"Error saving gadget config: {e}")
+        except IOError:
+            pass
 
 
 class GadgetConfigWindow:
     """
     Floating configuration window for enabling/disabling gadgets.
+    Displays KosDWM version in the title bar.
     """
     
     def __init__(self, parent, gadget_manager, on_save_callback=None):
-        """
-        Initialize the gadget configuration window.
-        
-        Args:
-            parent: Parent tkinter widget
-            gadget_manager: GadgetManager instance
-            on_save_callback: Optional callback to call after saving
-        """
         self.parent = parent
         self.gadget_manager = gadget_manager
         self.on_save_callback = on_save_callback
-        self.checkboxes = {}  # gadget_name -> BooleanVar
+        self.checkboxes = {}
         
         self._create_window()
     
     def _create_window(self):
-        """Create the configuration window."""
+        """Create the configuration window with version in title."""
+        # Include version in window title
         self.window = tk.Toplevel(self.parent)
-        self.window.title("Gadget Configuration")
+        self.window.title(f"Gadget Configuration - KosDWM v{KOSDWM_VERSION}")
         self.window.geometry("500x400")
         self.window.resizable(False, False)
         
@@ -379,14 +301,23 @@ class GadgetConfigWindow:
         self.window.transient(self.parent)
         self.window.grab_set()
         
-        # Header label
-        header = tk.Label(
-            self.window,
-            text="Configure Gadgets",
-            font=('Arial', 12, 'bold'),
-            pady=10
-        )
-        header.pack()
+        # Header with version
+        header_frame = tk.Frame(self.window)
+        header_frame.pack(fill=tk.X, padx=10, pady=10)
+        
+        tk.Label(
+            header_frame,
+            text="⚙️ Configure Gadgets",
+            font=('Arial', 12, 'bold')
+        ).pack(side=tk.LEFT)
+        
+        # Version label on right
+        tk.Label(
+            header_frame,
+            text=f"v{KOSDWM_VERSION}",
+            font=('Arial', 9),
+            fg='gray'
+        ).pack(side=tk.RIGHT)
         
         # Description
         desc = tk.Label(
@@ -459,7 +390,6 @@ class GadgetConfigWindow:
     
     def _create_gadget_checkboxes(self):
         """Create checkboxes for all available gadgets."""
-        # Clear existing widgets
         for widget in self.gadgets_frame.winfo_children():
             widget.destroy()
         
@@ -481,11 +411,9 @@ class GadgetConfigWindow:
             if info is None:
                 continue
             
-            # Frame for each gadget
             gadget_frame = tk.Frame(self.gadgets_frame)
             gadget_frame.pack(fill=tk.X, pady=3, anchor='w')
             
-            # Source indicator with tooltip showing path
             source_text = info['source']
             source_label = tk.Label(
                 gadget_frame,
@@ -496,17 +424,11 @@ class GadgetConfigWindow:
             )
             source_label.pack(side=tk.LEFT)
             
-            # Show path on hover for custom gadgets
-            if info.get('source_path'):
-                source_label.config(text=f"[{source_text}]")
-            
-            # Checkbox variable with immediate save
             var = tk.BooleanVar(value=info['enabled'])
             var.trace_add('write', lambda *args, name=gadget_name, v=var: 
                          self._on_toggle(name, v))
             self.checkboxes[gadget_name] = var
             
-            # Checkbox
             cb = tk.Checkbutton(
                 gadget_frame,
                 text=info['name'],
@@ -515,7 +437,6 @@ class GadgetConfigWindow:
             )
             cb.pack(side=tk.LEFT)
             
-            # Description
             desc_text = info['description']
             if len(desc_text) > 30:
                 desc_text = desc_text[:27] + "..."
@@ -527,18 +448,6 @@ class GadgetConfigWindow:
                 font=('Arial', 8)
             )
             desc_label.pack(side=tk.LEFT, padx=(5, 0))
-            
-            # Tooltip with full path for custom gadgets
-            if info.get('source_path'):
-                from tkinter import Tooltip
-                # Create tooltip showing full path
-                try:
-                    cb.bind("<Enter>", lambda e, p=info['source_path']: 
-                           cb.config(text=f"{info['name']} ({p})"))
-                    cb.bind("<Leave>", lambda e, n=info['name']: 
-                           cb.config(text=n))
-                except:
-                    pass
     
     def _create_errors_section(self):
         """Create section to display load errors."""
@@ -547,11 +456,9 @@ class GadgetConfigWindow:
         if not errors:
             return
         
-        # Error frame
         error_frame = tk.LabelFrame(self.window, text="Load Errors", fg='red')
         error_frame.pack(fill=tk.X, padx=10, pady=5)
         
-        # Show first 3 errors
         for error in errors[:3]:
             lbl = tk.Label(
                 error_frame,
@@ -579,13 +486,11 @@ class GadgetConfigWindow:
         else:
             self.gadget_manager.disable_gadget(gadget_name)
         
-        # Refresh display
         if self.on_save_callback:
             self.on_save_callback()
     
     def _on_save(self):
         """Save configuration and close window."""
-        # Configuration is already saved on toggle, just close
         self.window.destroy()
     
     def _on_reload(self):
@@ -594,7 +499,6 @@ class GadgetConfigWindow:
         self._create_gadget_checkboxes()
         self._create_errors_section()
         
-        # Refresh display
         if self.on_save_callback:
             self.on_save_callback()
     
