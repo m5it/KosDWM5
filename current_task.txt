@@ -1,4 +1,8 @@
-Plan: Fix Gadget System and Installation
-Progress: 4/4 completed (0 blocked)
-No task in progress.
-Updated: 2026-07-23 17:12:40
+Plan: Fix Gadget Display in Panel and Config Menu
+Progress: 0/3 completed (0 blocked)
+--- Current Task ---
+ID: 1784834730.4098685
+Title: Debug why gadget buttons are not visible in panel
+Instruction: Check run.py display_gadgets method to see if buttons are being created but perhaps with wrong colors (same as background) or not packed properly. Verify the gadget frame is visible and buttons are actually being added.
+Status: in_progress
+Updated: 2026-07-23 20:25:39

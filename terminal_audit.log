@@ -809,3 +809,765 @@ with open(gf, 'w') as f:
 print('test_gadget.py written, size:', gf.stat().st_size)
  | SUCCESS: True | OUTPUT_LEN: 35
 [2026-07-23 17:12:35] CMD: python kosdwm_diagnose.py | SUCCESS: True | OUTPUT_LEN: 3544
+[2026-07-23 19:46:38] CMD: grep -n GadgetManager\|self\.panel\|Panel( run.py | head -30 | SUCCESS: True | OUTPUT_LEN: 226
+[2026-07-23 19:46:41] CMD: grep -n gadget_manager\|Panel\|self.panel run.py | SUCCESS: True | OUTPUT_LEN: 198
+[2026-07-23 19:46:48] CMD: grep -n class Panel\|def.*panel\|panel = run.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-23 19:46:51] CMD: grep -n from src\|import.*panel\|panel run.py | head -20 | SUCCESS: True | OUTPUT_LEN: 250
+[2026-07-23 19:46:54] CMD: python -c 
+import re
+with open('run.py', 'r') as f:
+    lines = f.readlines()
+
+print('Lines containing panel, Panel, or gadget:')
+for i, line in enumerate(lines, 1):
+    if 'panel' in line.lower() or 'gadget' in line.lower():
+        print(f'{i:4d}: {line.rstrip()[:80]}')
+ | SUCCESS: True | OUTPUT_LEN: 1659
+[2026-07-23 19:46:59] CMD: python -c 
+with open('run.py', 'r') as f:
+    lines = f.readlines()
+
+# Print lines around display_gadgets
+for i in range(610, min(660, len(lines))):
+    print(f'{i+1:4d}: {lines[i].rstrip()}')
+ | SUCCESS: True | OUTPUT_LEN: 2131
+[2026-07-23 19:47:18] CMD: python -c 
+import re
+with open('src/gadgets.py', 'r') as f:
+    lines = f.readlines()
+
+print('Looking for get_enabled_gadgets and _discover_gadgets:')
+for i, line in enumerate(lines, 1):
+    if 'def get_enabled' in line or 'def _discover' in line or 'def _load' in line:
+        print(f'{i:4d}: {line.rstrip()}')
+ | SUCCESS: True | OUTPUT_LEN: 235
+[2026-07-23 19:47:21] CMD: python -c 
+with open('src/gadgets.py', 'r') as f:
+    lines = f.readlines()
+
+# Print _discover_gadgets method
+print('=== _discover_gadgets (lines 112-217) ===')
+for i in range(111, min(218, len(lines))):
+    print(f'{i+1:4d}: {lines[i].rstrip()}')
+ | SUCCESS: True | OUTPUT_LEN: 4728
+[2026-07-23 19:47:24] CMD: python -c 
+with open('src/gadgets.py', 'r') as f:
+    lines = f.readlines()
+
+# Print get_enabled_gadgets method
+print('=== get_enabled_gadgets (lines 218-252) ===')
+for i in range(217, min(260, len(lines))):
+    print(f'{i+1:4d}: {lines[i].rstrip()}')
+ | SUCCESS: True | OUTPUT_LEN: 1743
+[2026-07-23 19:47:39] CMD: grep -rn class.*Panel . | SUCCESS: True | OUTPUT_LEN: 2161
+[2026-07-23 19:47:42] CMD: grep -n class Panel run.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-23 19:47:46] CMD: python -c 
+import re
+with open('run.py', 'r') as f:
+    lines = f.readlines()
+
+print('Looking for panel creation:')
+for i, line in enumerate(lines, 1):
+    if 'panel' in line.lower() and ('=' in line or 'class' in line or 'def' in line):
+        print(f'{i:4d}: {line.rstrip()[:100]}')
+ | SUCCESS: True | OUTPUT_LEN: 28
+[2026-07-23 19:47:49] CMD: python -c 
+with open('run.py', 'r') as f:
+    lines = f.readlines()
+
+# Find the class definition and gadget_frame setup
+print('Searching for class definitions and gadget_frame:')
+for i, line in enumerate(lines, 1):
+    if 'class ' in line or 'gadget_frame' in line or 'time_frame' in line:
+        print(f'{i:4d}: {line.rstrip()[:100]}')
+ | SUCCESS: True | OUTPUT_LEN: 610
+[2026-07-23 19:47:54] CMD: python -c 
+import sys
+sys.path.insert(0, 'src')
+from gadgets import GadgetManager
+
+gm = GadgetManager()
+print('Available gadgets:', gm.get_available_gadgets())
+print('Enabled gadgets:', gm.get_enabled_gadgets())
+print('Load errors:', gm.get_load_errors())
+ | SUCCESS: True | OUTPUT_LEN: 122
+[2026-07-23 19:48:07] CMD: python -c 
+from pathlib import Path
+gf = Path.home() / '.config' / 'KosDWM' / 'gadgets' / 'test_gadget.py'
+print('File exists:', gf.exists())
+print('File size:', gf.stat().st_size if gf.exists() else 'N/A')
+if gf.exists():
+    content = gf.read_text()
+    print('\nFirst 50 lines:')
+    for i, line in enumerate(content.split('\n')[:50], 1):
+        print(f'{i:2d}: {line}')
+ | SUCCESS: True | OUTPUT_LEN: 1332
+[2026-07-23 19:48:13] CMD: python -c 
+import sys
+import importlib.util
+from pathlib import Path
+
+# Simulate what GadgetManager does
+gadgets_dir = Path.home() / '.config' / 'KosDWM' / 'gadgets'
+py_file = gadgets_dir / 'test_gadget.py'
+
+print(f'Loading: {py_file}')
+
+module_name = f'gadget_{py_file.stem}'
+spec = importlib.util.spec_from_file_location(module_name, py_file)
+module = importlib.util.module_from_spec(spec)
+
+# Add paths
+sys.path.insert(0, str(Path.home() / '.config' / 'KosDWM'))
+sys.path.insert(0, str(Path.home() / '.config' / 'KosDWM' / 'gadgets'))
+
+try:
+    spec.loader.exec_module(module)
+    print('Module loaded successfully')
+    print('Module name:', module.__name__)
+    
+    # Check what's in the module
+    import inspect
+    for name, obj in inspect.getmembers(module):
+        if inspect.isclass(obj):
+            print(f'  Class: {name}, module: {obj.__module__}')
+except Exception as e:
+    print(f'Error: {e}')
+    import traceback
+    traceback.print_exc()
+ | SUCCESS: True | OUTPUT_LEN: 244
+[2026-07-23 19:48:17] CMD: python -c 
+import sys
+sys.path.insert(0, 'src')
+from gadgets import GadgetManager
+
+gm = GadgetManager()
+print('Available:', gm.get_available_gadgets())
+print('Sources:', {k: gm.get_gadget_source(k) for k in gm.get_available_gadgets()})
+print('Enabled set:', gm._enabled_gadgets)
+ | SUCCESS: True | OUTPUT_LEN: 108
+[2026-07-23 19:48:22] CMD: python -c 
+import sys
+sys.path.insert(0, 'src')
+from gadgets import GadgetManager
+from pathlib import Path
+
+gm = GadgetManager()
+
+print('Gadgets dir:', gm._gadgets_dir)
+print('Exists:', gm._gadgets_dir.exists())
+print('Files in dir:')
+for f in gm._gadgets_dir.iterdir():
+    print(f'  {f.name} - is_file: {f.is_file()} - suffix: {f.suffix}')
+
+print('\nDiscovered py_files:')
+py_files = [f for f in gm._gadgets_dir.iterdir() if f.is_file() and f.suffix == '.py' and not f.name.startswith('_')]
+for f in py_files:
+    print(f'  {f.name}')
+ | SUCCESS: True | OUTPUT_LEN: 266
+[2026-07-23 19:48:25] CMD: python -c 
+import sys
+sys.path.insert(0, 'src')
+from gadgets import GadgetManager
+from pathlib import Path
+
+gm = GadgetManager()
+
+# Force reload and check errors
+gm.reload_gadgets()
+
+print('Load errors after reload:', gm.get_load_errors())
+print('Available after reload:', gm.get_available_gadgets())
+ | SUCCESS: True | OUTPUT_LEN: 69
+[2026-07-23 19:48:31] CMD: python -c 
+import sys
+import importlib.util
+import inspect
+from pathlib import Path
+from gadgets import GadgetBase
+
+# Load test_gadget manually like GadgetManager does
+gadgets_dir = Path.home() / '.config' / 'KosDWM' / 'gadgets'
+py_file = gadgets_dir / 'test_gadget.py'
+
+module_name = f'gadget_{py_file.stem}'
+spec = importlib.util.spec_from_file_location(module_name, py_file)
+module = importlib.util.module_from_spec(spec)
+
+sys.path.insert(0, str(Path.home() / '.config' / 'KosDWM'))
+sys.path.insert(0, str(gadgets_dir))
+
+spec.loader.exec_module(module)
+
+print('Module loaded:', module.__name__)
+print('Module classes:')
+
+classes = []
+for name, obj in inspect.getmembers(module, inspect.isclass):
+    is_gadgetbase = issubclass(obj, GadgetBase)
+    is_not_base = obj is not GadgetBase
+    same_module = obj.__module__ == module.__name__
+    print(f'  {name}:')
+    print(f'    issubclass(GadgetBase): {is_gadgetbase}')
+    print(f'    is not GadgetBase: {is_not_base}')
+    print(f'    same module: {same_module}')
+    if is_gadgetbase and is_not_base and same_module:
+        classes.append(obj)
+        print(f'    -> ADDED')
+
+print(f'\nFound {len(classes)} gadget classes')
+ | SUCCESS: True | OUTPUT_LEN: 164
+[2026-07-23 19:48:37] CMD: python -c 
+import sys
+sys.path.insert(0, 'src')
+from gadgets import GadgetBase
+import importlib.util
+import inspect
+from pathlib import Path
+
+# Load test_gadget manually like GadgetManager does
+gadgets_dir = Path.home() / '.config' / 'KosDWM' / 'gadgets'
+py_file = gadgets_dir / 'test_gadget.py'
+
+module_name = f'gadget_{py_file.stem}'
+spec = importlib.util.spec_from_file_location(module_name, py_file)
+module = importlib.util.module_from_spec(spec)
+
+sys.path.insert(0, str(Path.home() / '.config' / 'KosDWM'))
+sys.path.insert(0, str(gadgets_dir))
+
+spec.loader.exec_module(module)
+
+print('Module loaded:', module.__name__)
+print('Module classes:')
+
+classes = []
+for name, obj in inspect.getmembers(module, inspect.isclass):
+    is_gadgetbase = issubclass(obj, GadgetBase)
+    is_not_base = obj is not GadgetBase
+    same_module = obj.__module__ == module.__name__
+    print(f'  {name}:')
+    print(f'    issubclass(GadgetBase): {is_gadgetbase}')
+    print(f'    is not GadgetBase: {is_not_base}')
+    print(f'    same module: {same_module}')
+    if is_gadgetbase and is_not_base and same_module:
+        classes.append(obj)
+        print(f'    -> ADDED')
+
+print(f'\nFound {len(classes)} gadget classes')
+ | SUCCESS: True | OUTPUT_LEN: 364
+[2026-07-23 19:48:46] CMD: python -c 
+# Check the current gadget file imports
+from pathlib import Path
+
+gf = Path.home() / '.config' / 'KosDWM' / 'gadgets' / 'test_gadget.py'
+content = gf.read_text()
+
+print('Current imports in test_gadget.py:')
+for line in content.split('\n'):
+    if line.startswith('from') or line.startswith('import'):
+        print(f'  {line}')
+ | SUCCESS: True | OUTPUT_LEN: 145
+[2026-07-23 19:48:51] CMD: python -c 
+from pathlib import Path
+
+# Fix test_gadget.py
+gf = Path.home() / '.config' / 'KosDWM' / 'gadgets' / 'test_gadget.py'
+content = gf.read_text()
+
+# Replace the import line
+new_content = content.replace(
+    'from src.gadgets import GadgetBase',
+    'from gadgets import GadgetBase'
+)
+
+with open(gf, 'w') as f:
+    f.write(new_content)
+
+print('Fixed test_gadget.py import')
+
+# Fix hello_world.py  
+gf2 = Path.home() / '.config' / 'KosDWM' / 'gadgets' / 'hello_world.py'
+if gf2.exists():
+    content2 = gf2.read_text()
+    new_content2 = content2.replace(
+        'from src.gadgets import GadgetBase',
+        'from gadgets import GadgetBase'
+    )
+    with open(gf2, 'w') as f:
+        f.write(new_content2)
+    print('Fixed hello_world.py import')
+ | SUCCESS: True | OUTPUT_LEN: 56
+[2026-07-23 19:48:54] CMD: python -c 
+import sys
+sys.path.insert(0, 'src')
+from gadgets import GadgetManager
+
+gm = GadgetManager()
+print('Available gadgets:', gm.get_available_gadgets())
+print('Enabled gadgets:', [g.get_name() for g in gm.get_enabled_gadgets()])
+print('Load errors:', gm.get_load_errors())
+ | SUCCESS: True | OUTPUT_LEN: 99
+[2026-07-23 19:49:01] CMD: python -c 
+import json
+from pathlib import Path
+
+config_path = Path.home() / '.config' / 'KosDWM' / 'gadgets.json'
+with open(config_path) as f:
+    config = json.load(f)
+
+# Enable test_gadget
+if 'test_gadget' not in config['enabled']:
+    config['enabled'].append('test_gadget')
+    with open(config_path, 'w') as f:
+        json.dump(config, f, indent=2)
+    print('Enabled test_gadget')
+else:
+    print('test_gadget already enabled')
+
+print('Enabled gadgets:', config['enabled'])
+ | SUCCESS: True | OUTPUT_LEN: 68
+[2026-07-23 19:49:03] CMD: timeout 5 python run.py || echo KosDWM started (timeout after 5s) | SUCCESS: False | OUTPUT_LEN: 0
+[2026-07-23 19:49:09] CMD: bash -c python run.py & sleep 3 && echo 'KosDWM started' || echo 'KosDWM process ended' | SUCCESS: True | OUTPUT_LEN: 194
+[2026-07-23 19:49:12] CMD: pip install screeninfo | SUCCESS: False | OUTPUT_LEN: 9
+[2026-07-23 19:49:16] CMD: python -c 
+import sys
+sys.path.insert(0, 'src')
+from gadgets import GadgetManager
+
+gm = GadgetManager()
+print('=== Final Test Results ===')
+print('Available gadgets:', gm.get_available_gadgets())
+print('Enabled gadgets:', [g.get_name() for g in gm.get_enabled_gadgets()])
+print('Load errors:', gm.get_load_errors())
+
+print('\n=== Gadget Details ===')
+for g in gm.get_enabled_gadgets():
+    print(f'  {g.get_name()}: icon={g.get_icon()}, tooltip={g.get_tooltip()}')
+ | SUCCESS: True | OUTPUT_LEN: 311
+[2026-07-23 19:49:19] CMD: python kosdwm_diagnose.py | SUCCESS: True | OUTPUT_LEN: 2567
+[2026-07-23 19:49:22] CMD: pwd | SUCCESS: True | OUTPUT_LEN: 26
+[2026-07-23 19:49:26] CMD: ls -la | SUCCESS: True | OUTPUT_LEN: 1815
+[2026-07-23 19:49:32] CMD: python kosdwm_diagnose.py | SUCCESS: True | OUTPUT_LEN: 2567
+[2026-07-23 19:49:35] CMD: cat ~/.config/KosDWM/kosdwm_path.conf | SUCCESS: True | OUTPUT_LEN: 25
+[2026-07-23 19:49:38] CMD: python -c 
+from pathlib import Path
+config_path = Path.home() / '.config' / 'KosDWM' / 'kosdwm_path.conf'
+print('Config path:', config_path)
+print('Exists:', config_path.exists())
+if config_path.exists():
+    content = config_path.read_text().strip()
+    print('Content:', repr(content))
+    path = Path(content)
+    print('Path exists:', path.exists())
+    print('Has src:', (path / 'src').exists())
+ | SUCCESS: True | OUTPUT_LEN: 70
+[2026-07-23 19:49:41] CMD: python -c 
+from pathlib import Path
+config_path = Path.home() / '.config' / 'KosDWM' / 'kosdwm_path.conf'
+config_path.parent.mkdir(parents=True, exist_ok=True)
+with open(config_path, 'w') as f:
+    f.write('/home/t3ch/script/KosDWM4')
+print('Written to:', config_path)
+print('Content:', config_path.read_text())
+ | SUCCESS: True | OUTPUT_LEN: 90
+[2026-07-23 19:49:44] CMD: ls -la /home/t3ch/ | grep -i kos | SUCCESS: True | OUTPUT_LEN: 2298
+[2026-07-23 19:49:48] CMD: python -c 
+from pathlib import Path
+config_path = Path.home() / '.config' / 'KosDWM' / 'kosdwm_path.conf'
+print('Home:', Path.home())
+print('Config path:', config_path)
+print('Parent exists:', config_path.parent.exists())
+print('Parent contents:', list(config_path.parent.iterdir()) if config_path.parent.exists() else 'N/A')
+ | SUCCESS: True | OUTPUT_LEN: 704
+[2026-07-23 19:50:11] CMD: python kosdwm_diagnose.py | SUCCESS: True | OUTPUT_LEN: 3614
+[2026-07-23 19:52:48] CMD: python -m venv .venv | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-23 19:52:53] CMD: bash -c source .venv/bin/activate && pip install screeninfo | SUCCESS: True | OUTPUT_LEN: 226
+[2026-07-23 19:52:56] CMD: cp ~/.config/KosDWM/gadgets/notices.py ~/.config/KosDWM/gadgets/notices.py.backup | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-23 19:53:01] CMD: python -c 
+from pathlib import Path
+
+gf = Path.home() / '.config' / 'KosDWM' / 'gadgets' / 'notices.py'
+content = gf.read_text()
+
+# Check current imports
+print('Current imports:')
+for line in content.split('\n'):
+    if 'from src' in line or 'from gadgets' in line:
+        print(f'  {line}')
+
+# Replace imports to use correct path
+new_content = content.replace('from src.gadgets import GadgetBase', 'from gadgets import GadgetBase')
+new_content = new_content.replace('from src.notices_store import', 'from notices_store import')
+new_content = new_content.replace('from src.notices_api import', 'from notices_api import')
+new_content = new_content.replace('from src.notifications import', 'from notifications import')
+
+with open(gf, 'w') as f:
+    f.write(new_content)
+
+print('\nFixed notices.py imports')
+ | SUCCESS: True | OUTPUT_LEN: 850
+[2026-07-23 19:53:04] CMD: ls -la ~/.config/KosDWM/gadgets/ | SUCCESS: True | OUTPUT_LEN: 608
+[2026-07-23 19:53:08] CMD: python -c 
+from pathlib import Path
+
+gf = Path.home() / '.config' / 'KosDWM' / 'gadgets' / 'notices.py'
+content = gf.read_text()
+
+# Check current imports
+print('Current imports:')
+for i, line in enumerate(content.split('\n')[:50], 1):
+    print(f'{i:2d}: {line}')
+ | SUCCESS: True | OUTPUT_LEN: 850
+[2026-07-23 19:53:12] CMD: python3 -c 
+import os
+gf = os.path.expanduser('~/.config/KosDWM/gadgets/notices.py')
+print('File exists:', os.path.exists(gf))
+print('Is file:', os.path.isfile(gf))
+if os.path.exists(gf):
+    with open(gf, 'r') as f:
+        lines = f.readlines()[:30]
+        for i, line in enumerate(lines, 1):
+            print(f'{i:2d}: {line.rstrip()}')
+ | SUCCESS: True | OUTPUT_LEN: 34
+[2026-07-23 19:53:16] CMD: find ~/.config/KosDWM -name notices.py 2>/dev/null | SUCCESS: True | OUTPUT_LEN: 77
+[2026-07-23 19:53:19] CMD: find ~/.config/KosDWM -name notices.py | SUCCESS: True | OUTPUT_LEN: 89
+[2026-07-23 19:53:50] CMD: pwd | SUCCESS: True | OUTPUT_LEN: 26
+[2026-07-23 19:53:53] CMD: ls -la | SUCCESS: True | OUTPUT_LEN: 1865
+[2026-07-23 19:53:56] CMD: ls -la ~/.config/KosDWM/gadgets/ | SUCCESS: True | OUTPUT_LEN: 608
+[2026-07-23 19:53:59] CMD: head -20 ~/.config/KosDWM/gadgets/notices.py | SUCCESS: True | OUTPUT_LEN: 474
+[2026-07-23 19:54:03] CMD: grep -n from src\. ~/.config/KosDWM/gadgets/notices.py | SUCCESS: True | OUTPUT_LEN: 234
+[2026-07-23 19:54:07] CMD: sed -i s/from src\./from /g ~/.config/KosDWM/gadgets/notices.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-23 19:54:11] CMD: python -c 
+import json
+from pathlib import Path
+
+config_path = Path.home() / '.config' / 'KosDWM' / 'gadgets.json'
+with open(config_path) as f:
+    config = json.load(f)
+
+# Enable notices gadget
+if 'notices' not in config['enabled']:
+    config['enabled'].append('notices')
+    with open(config_path, 'w') as f:
+        json.dump(config, f, indent=2)
+    print('Enabled notices gadget')
+else:
+    print('notices already enabled')
+
+print('Enabled gadgets:', config['enabled'])
+ | SUCCESS: True | OUTPUT_LEN: 82
+[2026-07-23 19:54:44] CMD: bash -c source .venv/bin/activate && python run.py & sleep 5 && echo 'KosDWM running' || echo 'KosDWM stopped' | SUCCESS: False | OUTPUT_LEN: 7
+[2026-07-23 19:54:47] CMD: ps aux | grep python | SUCCESS: True | OUTPUT_LEN: 206
+[2026-07-23 19:54:51] CMD: ps aux | SUCCESS: True | OUTPUT_LEN: 26260
+[2026-07-23 19:55:27] CMD: python -c 
+import sys
+sys.path.insert(0, 'src')
+from gadgets import GadgetManager
+
+gm = GadgetManager()
+print('=== Gadget Status ===')
+print('Available:', gm.get_available_gadgets())
+print('Enabled:', gm.get_enabled_gadgets())
+print('Load errors:', gm.get_load_errors())
+
+print('\n=== Gadget Sources ===')
+for name in gm.get_available_gadgets():
+    print(f'  {name}: {gm.get_gadget_source(name)}')
+ | SUCCESS: True | OUTPUT_LEN: 364
+[2026-07-23 19:55:30] CMD: head -30 ~/.config/KosDWM/gadgets/notices.py | SUCCESS: True | OUTPUT_LEN: 811
+[2026-07-23 19:55:35] CMD: python -c 
+import sys
+import importlib.util
+from pathlib import Path
+
+# Try to load notices.py manually
+gadgets_dir = Path.home() / '.config' / 'KosDWM' / 'gadgets'
+py_file = gadgets_dir / 'notices.py'
+
+print(f'Loading: {py_file}')
+print(f'File exists: {py_file.exists()}')
+
+module_name = f'gadget_{py_file.stem}'
+spec = importlib.util.spec_from_file_location(module_name, py_file)
+module = importlib.util.module_from_spec(spec)
+
+# Add paths like GadgetManager does
+sys.path.insert(0, str(Path.home() / '.config' / 'KosDWM'))
+sys.path.insert(0, str(gadgets_dir))
+
+try:
+    spec.loader.exec_module(module)
+    print('Module loaded successfully')
+    print('Module name:', module.__name__)
+    
+    # Check what's in the module
+    import inspect
+    classes = []
+    for name, obj in inspect.getmembers(module, inspect.isclass):
+        print(f'  Class: {name}, module: {obj.__module__}')
+        if obj.__module__ == module.__name__:
+            classes.append(obj)
+    print(f'Found {len(classes)} classes from this module')
+    
+except Exception as e:
+    print(f'Error loading module: {e}')
+    import traceback
+    traceback.print_exc()
+ | SUCCESS: True | OUTPUT_LEN: 657
+[2026-07-23 19:56:08] CMD: find ~/.config/KosDWM -name notices.py | SUCCESS: True | OUTPUT_LEN: 89
+[2026-07-23 19:56:12] CMD: ls -la ~/.config/KosDWM/gadgets/notices.py | SUCCESS: True | OUTPUT_LEN: 78
+[2026-07-23 19:56:15] CMD: python -c 
+from pathlib import Path
+
+gf = Path.home() / '.config' / 'KosDWM' / 'gadgets' / 'notices.py'
+print('Path:', gf)
+print('Exists:', gf.exists())
+print('Is file:', gf.is_file())
+print('Resolve:', gf.resolve())
+print('Resolve exists:', gf.resolve().exists())
+ | SUCCESS: True | OUTPUT_LEN: 156
+[2026-07-23 19:56:18] CMD: python -c 
+import os
+from pathlib import Path
+
+print('Path.home():', Path.home())
+print('os.environ.get(HOME):', os.environ.get('HOME'))
+print('os.path.expanduser(~):', os.path.expanduser('~'))
+ | SUCCESS: True | OUTPUT_LEN: 91
+[2026-07-23 19:56:23] CMD: python -c 
+import os
+
+path = os.path.expanduser('~/.config/KosDWM/gadgets/notices.py')
+print('Path:', path)
+print('Exists (os):', os.path.exists(path))
+print('Is file (os):', os.path.isfile(path))
+
+# Try to read it
+try:
+    with open(path, 'r') as f:
+        content = f.read(500)
+        print('First 500 chars:', repr(content[:500]))
+except Exception as e:
+    print('Error:', e)
+ | SUCCESS: True | OUTPUT_LEN: 181
+[2026-07-23 19:56:26] CMD: ls -la ~/.config/KosDWM/~/ | SUCCESS: True | OUTPUT_LEN: 145
+[2026-07-23 19:56:29] CMD: mv ~/.config/KosDWM/~/.config/KosDWM/gadgets/notices.py ~/.config/KosDWM/gadgets/notices.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-23 20:06:02] CMD: ls -la ~/.config/KosDWM/gadgets/notices.py | SUCCESS: True | OUTPUT_LEN: 78
+[2026-07-23 20:06:06] CMD: python -c 
+from pathlib import Path
+gf = Path.home() / '.config' / 'KosDWM' / 'gadgets' / 'notices.py'
+print('Exists:', gf.exists())
+print('Is file:', gf.is_file())
+ | SUCCESS: True | OUTPUT_LEN: 29
+[2026-07-23 20:06:10] CMD: find ~/.config/KosDWM -name notices.py -type f | SUCCESS: True | OUTPUT_LEN: 36
+[2026-07-23 20:06:23] CMD: file ~/.config/KosDWM/gadgets/notices.py | SUCCESS: False | OUTPUT_LEN: 0
+[2026-07-23 20:06:26] CMD: head -5 ~/.config/KosDWM/gadgets/notices.py | SUCCESS: True | OUTPUT_LEN: 129
+[2026-07-23 20:06:30] CMD: python -c 
+import os
+import subprocess
+
+# Try to use subprocess to check
+result = subprocess.run(['ls', '-la', os.path.expanduser('~/.config/KosDWM/gadgets/notices.py')], 
+                       capture_output=True, text=True)
+print('ls output:', result.stdout)
+print('ls stderr:', result.stderr)
+
+# Check with os.path
+path = os.path.expanduser('~/.config/KosDWM/gadgets/notices.py')
+print('os.path.exists:', os.path.exists(path))
+ | SUCCESS: True | OUTPUT_LEN: 157
+[2026-07-23 20:06:34] CMD: ls -la ~/.config/KosDWM/ | SUCCESS: True | OUTPUT_LEN: 951
+[2026-07-23 20:06:37] CMD: find ~/.config/KosDWM -name notices.py | SUCCESS: True | OUTPUT_LEN: 36
+[2026-07-23 20:06:42] CMD: ls -la ~/.config/KosDWM/gadgets/ | SUCCESS: True | OUTPUT_LEN: 608
+[2026-07-23 20:06:45] CMD: cat ~/.config/KosDWM/gadgets/notices.py | head -5 | SUCCESS: True | OUTPUT_LEN: 78
+[2026-07-23 20:08:18] CMD: head -n 5 ~/.config/KosDWM/gadgets/notices.py | SUCCESS: True | OUTPUT_LEN: 129
+[2026-07-23 20:08:22] CMD: python -c 
+import os
+path = '/home/t3ch/.config/KosDWM/gadgets/notices.py'
+print('Path:', path)
+print('Exists:', os.path.exists(path))
+print('Is file:', os.path.isfile(path))
+print('Real path:', os.path.realpath(path))
+ | SUCCESS: True | OUTPUT_LEN: 136
+[2026-07-23 20:08:26] CMD: python -c 
+# Try to open and read the file
+try:
+    with open('/home/t3ch/.config/KosDWM/gadgets/notices.py', 'r') as f:
+        content = f.read()
+        print('File opened successfully!')
+        print('Size:', len(content))
+        print('First 200 chars:', repr(content[:200]))
+except Exception as e:
+    print('Error:', type(e).__name__, e)
+    
+    # Try listing the directory
+    import os
+    try:
+        files = os.listdir('/home/t3ch/.config/KosDWM/gadgets/')
+        print('Directory contents:', files)
+    except Exception as e2:
+        print('Listdir error:', e2)
+ | SUCCESS: True | OUTPUT_LEN: 181
+[2026-07-23 20:09:16] CMD: find ~/.config -name notices.py | SUCCESS: True | OUTPUT_LEN: 36
+[2026-07-23 20:09:20] CMD: ls -la ~/.config/KosDWM/~/.config/KosDWM/gadgets/ | SUCCESS: True | OUTPUT_LEN: 95
+[2026-07-23 20:09:23] CMD: find ~ -name notices.py 2>/dev/null | SUCCESS: True | OUTPUT_LEN: 77
+[2026-07-23 20:09:27] CMD: find ~ -name notices.py | SUCCESS: True | OUTPUT_LEN: 36
+[2026-07-23 20:09:31] CMD: ls -la /home/t3ch/script/KosDWM4/~ | SUCCESS: True | OUTPUT_LEN: 148
+[2026-07-23 20:09:35] CMD: cp -r ~/.config/KosDWM/~/.config/KosDWM/gadgets/* ~/.config/KosDWM/gadgets/ | SUCCESS: True | OUTPUT_LEN: 130
+[2026-07-23 20:09:39] CMD: ls -la /home/t3ch/script/KosDWM4/~/.config/KosDWM/gadgets/ | SUCCESS: True | OUTPUT_LEN: 608
+[2026-07-23 20:11:41] CMD: python -c 
+import shutil
+import os
+
+src_dir = '/home/t3ch/script/KosDWM4/~/.config/KosDWM/gadgets/'
+dst_dir = os.path.expanduser('~/.config/KosDWM/gadgets/')
+
+print(f'Source: {src_dir}')
+print(f'Destination: {dst_dir}')
+
+# Check source exists
+if os.path.exists(src_dir):
+    print('Source exists')
+    files = os.listdir(src_dir)
+    print(f'Files in source: {files}')
+    
+    # Copy each file
+    for f in files:
+        if f.endswith('.py') and f != '__pycache__':
+            src_file = os.path.join(src_dir, f)
+            dst_file = os.path.join(dst_dir, f)
+            if os.path.isfile(src_file):
+                shutil.copy2(src_file, dst_file)
+                print(f'Copied: {f}')
+else:
+    print('Source does not exist!')
+ | SUCCESS: True | OUTPUT_LEN: 437
+[2026-07-23 20:11:46] CMD: python -c 
+import os
+import sys
+sys.path.insert(0, 'src')
+from gadgets import GadgetManager
+
+# First verify files exist
+gadgets_dir = os.path.expanduser('~/.config/KosDWM/gadgets/')
+print('Files in gadgets dir:')
+for f in os.listdir(gadgets_dir):
+    if f.endswith('.py'):
+        print(f'  {f}')
+
+print()
+
+# Now test GadgetManager
+gm = GadgetManager()
+print('Available gadgets:', gm.get_available_gadgets())
+print('Enabled gadgets:', [g.get_name() for g in gm.get_enabled_gadgets()])
+print('Load errors:', gm.get_load_errors())
+ | SUCCESS: True | OUTPUT_LEN: 683
+[2026-07-23 20:11:57] CMD: bash -c source .venv/bin/activate && pip install flask flask-cors | SUCCESS: True | OUTPUT_LEN: 1594
+[2026-07-23 20:12:01] CMD: bash -c pkill -f 'python run.py' 2>/dev/null; sleep 1; source .venv/bin/activate && python run.py & sleep 5 && echo 'KosDWM restarted' | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-23 20:12:05] CMD: ps aux | grep run.py | SUCCESS: True | OUTPUT_LEN: 206
+[2026-07-23 20:12:08] CMD: python kosdwm_diagnose.py | SUCCESS: True | OUTPUT_LEN: 3802
+[2026-07-23 20:12:22] CMD: python -c 
+import os
+gadgets_dir = os.path.expanduser('~/.config/KosDWM/gadgets/')
+print('Gadgets in correct location:')
+for f in sorted(os.listdir(gadgets_dir)):
+    if f.endswith('.py'):
+        size = os.path.getsize(os.path.join(gadgets_dir, f))
+        print(f'  {f} ({size} bytes)')
+ | SUCCESS: True | OUTPUT_LEN: 210
+[2026-07-23 20:12:27] CMD: python -c 
+import sys
+sys.path.insert(0, 'src')
+from gadgets import GadgetManager
+
+gm = GadgetManager()
+print('=== Final Verification ===')
+print('Available gadgets:', gm.get_available_gadgets())
+print('Enabled gadgets:', [g.get_name() for g in gm.get_enabled_gadgets()])
+print('Load errors:', gm.get_load_errors())
+
+print('\n=== Gadget Details ===')
+for g in gm.get_enabled_gadgets():
+    print(f'  {g.get_name()}: icon={g.get_icon()}, source={gm.get_gadget_source(g.get_name())}')
+ | SUCCESS: True | OUTPUT_LEN: 980
+[2026-07-23 20:17:48] CMD: find ~/.config/KosDWM -name gadgets.json | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-23 20:17:52] CMD: ls -la ~/.config/KosDWM/ | SUCCESS: True | OUTPUT_LEN: 951
+[2026-07-23 20:17:55] CMD: ls -la /home/t3ch/.config/KosDWM/ | SUCCESS: True | OUTPUT_LEN: 713
+[2026-07-23 20:17:59] CMD: cat /home/t3ch/.config/KosDWM/gadgets.json | SUCCESS: True | OUTPUT_LEN: 48
+[2026-07-23 20:18:04] CMD: python -c 
+import json
+import os
+
+config_path = os.path.expanduser('~/.config/KosDWM/gadgets.json')
+
+with open(config_path, 'r') as f:
+    config = json.load(f)
+
+print('Current enabled gadgets:', config['enabled'])
+
+# Add missing gadgets
+for gadget in ['test_gadget', 'notices']:
+    if gadget not in config['enabled']:
+        config['enabled'].append(gadget)
+        print(f'Added: {gadget}')
+
+with open(config_path, 'w') as f:
+    json.dump(config, f, indent=2)
+
+print('\nUpdated enabled gadgets:', config['enabled'])
+ | SUCCESS: True | OUTPUT_LEN: 143
+[2026-07-23 20:18:11] CMD: grep -n display_gadgets\|width=4\|width=2 run.py | SUCCESS: True | OUTPUT_LEN: 207
+[2026-07-23 20:18:15] CMD: sed -n 612,645p run.py | SUCCESS: True | OUTPUT_LEN: 1148
+[2026-07-23 20:18:18] CMD: sed -i s/width=4,/width=8,/ run.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-23 20:18:22] CMD: grep -n width= run.py | SUCCESS: True | OUTPUT_LEN: 1096
+[2026-07-23 20:18:26] CMD: sed -n 620,640p run.py | SUCCESS: True | OUTPUT_LEN: 657
+[2026-07-23 20:18:30] CMD: sed -n 585,600p run.py | SUCCESS: True | OUTPUT_LEN: 422
+[2026-07-23 20:18:34] CMD: sed -i s/width=2,$/width=4,/ run.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-23 20:18:37] CMD: grep -n width= run.py | head -20 | SUCCESS: True | OUTPUT_LEN: 1347
+[2026-07-23 20:18:41] CMD: sed -n 588,595p run.py | SUCCESS: True | OUTPUT_LEN: 182
+[2026-07-23 20:18:44] CMD: sed -n 626,635p run.py | SUCCESS: True | OUTPUT_LEN: 163
+[2026-07-23 20:18:47] CMD: python kosdwm_diagnose.py | SUCCESS: True | OUTPUT_LEN: 3802
+[2026-07-23 20:22:03] CMD: python install_kosdwm.py --user | SUCCESS: True | OUTPUT_LEN: 1259
+[2026-07-23 20:24:39] CMD: python -c 
+import sys
+sys.path.insert(0, 'src')
+from gadgets import GadgetManager
+
+gm = GadgetManager()
+print('=== Gadget Status ===')
+print('Available:', gm.get_available_gadgets())
+print('Enabled:', gm.get_enabled_gadgets())
+print('Load errors:', gm.get_load_errors())
+ | SUCCESS: True | OUTPUT_LEN: 444
+[2026-07-23 20:24:42] CMD: cat ~/.config/KosDWM/gadgets.json | SUCCESS: True | OUTPUT_LEN: 83
+[2026-07-23 20:24:47] CMD: find ~ -name gadgets.json 2>/dev/null | head -5 | SUCCESS: True | OUTPUT_LEN: 77
+[2026-07-23 20:24:50] CMD: find ~ -name gadgets.json | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-23 20:24:53] CMD: python -c 
+import json
+import os
+
+config_path = os.path.expanduser('~/.config/KosDWM/gadgets.json')
+
+# Create config with all gadgets enabled
+config = {
+    'enabled': ['hello_world', 'test_gadget', 'notices']
+}
+
+with open(config_path, 'w') as f:
+    json.dump(config, f, indent=2)
+
+print(f'Created {config_path}')
+print(f'Content: {json.dumps(config, indent=2)}')
+ | SUCCESS: True | OUTPUT_LEN: 131
+[2026-07-23 20:24:57] CMD: python -c 
+import sys
+sys.path.insert(0, 'src')
+from gadgets import GadgetManager
+
+gm = GadgetManager()
+print('Available:', gm.get_available_gadgets())
+print('Enabled:', [g.get_name() for g in gm.get_enabled_gadgets()])
+print('Load errors:', gm.get_load_errors())
+ | SUCCESS: True | OUTPUT_LEN: 541

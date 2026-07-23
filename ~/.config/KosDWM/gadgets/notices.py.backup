@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Notices Gadget for KosDWM
 ==========================
@@ -7,36 +8,71 @@ Includes HTTP API for external access and notification system.
 """
 
 import sys
+import os
 from pathlib import Path
 
-# Add KosDWM src directory to path
-# Path from ~/.config/KosDWM/gadgets/ to actual KosDWM installation
-sys.path.insert(0, str(Path.home() / "adata2" / "OurAI" / "playground" / "KosDWM" / "src"))
+def find_kosdwm_path():
+    """
+    Find the KosDWM installation directory.
+    Checks in order:
+    1. KOSDWM_HOME environment variable
+    2. ~/.config/KosDWM/kosdwm_path.conf file
+    3. Common locations
+    4. Fallback to relative path from gadget location
+    """
+    # 1. Check environment variable
+    if 'KOSDWM_HOME' in os.environ:
+        path = Path(os.environ['KOSDWM_HOME'])
+        if path.exists():
+            return path
+    
+    # 2. Check config file
+    config_path = Path.home() / ".config" / "KosDWM" / "kosdwm_path.conf"
+    if config_path.exists():
+        try:
+            with open(config_path, 'r') as f:
+                path = Path(f.read().strip())
+                if path.exists():
+                    return path
+        except:
+            pass
+    
+    # 3. Try common locations
+    common_paths = [
+        Path.home() / "Projects" / "KosDWM",
+        Path.home() / "workspace" / "KosDWM",
+        Path.home() / "code" / "KosDWM",
+        Path.home() / "KosDWM",
+        Path("/opt/KosDWM"),
+        Path("/usr/local/share/KosDWM"),
+    ]
+    
+    for path in common_paths:
+        if (path / "src").exists():
+            return path
+    
+    # 4. Fallback: try to find relative to this file
+    # This gadget is at: ~/.config/KosDWM/gadgets/notices.py
+    # KosDWM should be at: ~/.config/KosDWM/ (which contains src/)
+    gadget_dir = Path(__file__).parent
+    kosdwm_path = gadget_dir.parent
+    
+    if (kosdwm_path / "src").exists():
+        return kosdwm_path
+    
+    raise RuntimeError(
+        "Could not find KosDWM installation. Please set KOSDWM_HOME environment variable "
+        "or create ~/.config/KosDWM/kosdwm_path.conf with the path to KosDWM."
+    )
 
-from gadgets import GadgetBase
+# Add KosDWM to Python path
+KOSDWM_PATH = find_kosdwm_path()
+sys.path.insert(0, str(KOSDWM_PATH))
 
-# Try to import notices modules, handle if not available
-try:
-    from notices_store import NoticesStore, Notice
-    STORE_AVAILABLE = True
-except ImportError as e:
-    print(f"Notices: notices_store not available: {e}")
-    STORE_AVAILABLE = False
-
-try:
-    from notices_api import NoticesAPIServer
-    API_AVAILABLE = True
-except ImportError as e:
-    print(f"Notices: notices_api not available: {e}")
-    API_AVAILABLE = False
-
-try:
-    from notifications import ReminderThread, NotificationSettingsDialog, ReminderSettings
-    NOTIFICATIONS_AVAILABLE = True
-except ImportError as e:
-    print(f"Notices: notifications not available: {e}")
-    NOTIFICATIONS_AVAILABLE = False
-
+from src.gadgets import GadgetBase
+from src.notices_store import NoticesStore, Notice
+from src.notices_api import NoticesAPIServer
+from src.notifications import ReminderThread, NotificationSettingsDialog, ReminderSettings
 from tkinter import messagebox, simpledialog, ttk
 import tkinter as tk
 from datetime import datetime, timedelta
@@ -54,15 +90,7 @@ class NoticesGadget(GadgetBase):
     
     def __init__(self):
         super().__init__()
-        
-        # Check if store is available
-        if not STORE_AVAILABLE:
-            self.error_message = "Notices store not available"
-            self.store = None
-        else:
-            self.store = NoticesStore()
-            self.error_message = None
-        
+        self.store = NoticesStore()
         self.window = None
         self.refresh_timer = None
         self.api_server = None
@@ -70,9 +98,9 @@ class NoticesGadget(GadgetBase):
         self.api_lock = threading.Lock()
         
         # Notification system
-        self.reminder_settings = None
+        self.reminder_settings = ReminderSettings()
         self.reminder_thread = None
-        self.notification_alert = False
+        self.notification_alert = False  # Visual alert state
         
         # GUI state
         self.search_var = None
@@ -80,21 +108,17 @@ class NoticesGadget(GadgetBase):
         self.filter_var = None
         self.tree = None
         
-        if self.store:
-            # Start the API server
-            self._start_api_server()
-            
-            # Start the reminder thread
-            self._start_reminder_thread()
-            
-            # Start refresh timer
-            self._start_refresh_timer()
+        # Start the API server
+        self._start_api_server()
+        
+        # Start the reminder thread
+        self._start_reminder_thread()
+        
+        # Start refresh timer
+        self._start_refresh_timer()
     
     def _start_api_server(self):
         """Start the HTTP API server."""
-        if not API_AVAILABLE or not self.store:
-            return
-            
         try:
             with self.api_lock:
                 if self.api_server is None:
@@ -119,11 +143,7 @@ class NoticesGadget(GadgetBase):
     
     def _start_reminder_thread(self):
         """Start the reminder notification thread."""
-        if not NOTIFICATIONS_AVAILABLE or not self.store:
-            return
-            
-        if self.reminder_thread is None or not getattr(self.reminder_thread, '_running', False):
-            self.reminder_settings = ReminderSettings()
+        if self.reminder_thread is None or not self.reminder_thread._running:
             self.reminder_thread = ReminderThread(
                 notices_store=self.store,
                 on_reminder=self._on_reminder_triggered,
@@ -159,9 +179,6 @@ class NoticesGadget(GadgetBase):
     
     def _start_refresh_timer(self):
         """Start a timer to refresh the badge count periodically."""
-        if not self.store:
-            return
-            
         def refresh_loop():
             while True:
                 time.sleep(60)  # Refresh every minute
@@ -179,9 +196,6 @@ class NoticesGadget(GadgetBase):
     
     def get_icon(self) -> str:
         """Return icon with badge count if there are active notices."""
-        if not self.store:
-            return "📝!"
-        
         active_count = self.store.get_active_count()
         
         # Show alert indicator if notifications are pending
@@ -195,9 +209,6 @@ class NoticesGadget(GadgetBase):
         return "📝"
     
     def get_tooltip(self) -> str:
-        if not self.store:
-            return "Notices (Error: Store not available)"
-        
         active = self.store.get_active_count()
         overdue = len(self.store.get_overdue())
         due_today = len(self.store.get_due_today())
@@ -220,19 +231,10 @@ class NoticesGadget(GadgetBase):
         return f"Click to view notices ({api_status})"
     
     def get_description(self) -> str:
-        if not self.store:
-            return "Notices gadget - ERROR: Store module not available. Check that notices_store.py is in the src directory."
         return "Manage notices and reminders with due dates, priorities, HTTP API, and notifications."
     
     def on_click(self, event=None):
         """Open the notices window."""
-        if not self.store:
-            messagebox.showerror(
-                "Error",
-                "Notices store not available.\n\nPlease ensure notices_store.py is in the KosDWM src directory."
-            )
-            return
-        
         # Clear notification alert when user opens the window
         self.notification_alert = False
         
@@ -244,9 +246,6 @@ class NoticesGadget(GadgetBase):
     
     def _create_window(self):
         """Create the main notices window with comprehensive GUI."""
-        if not self.store:
-            return
-            
         self.window = tk.Toplevel()
         self.window.title("Notices Manager")
         self.window.geometry("900x600")
@@ -303,13 +302,12 @@ class NoticesGadget(GadgetBase):
         settings_frame = tk.Frame(stats_frame)
         settings_frame.pack(side=tk.RIGHT)
         
-        if NOTIFICATIONS_AVAILABLE:
-            tk.Button(
-                settings_frame,
-                text="🔔 Notification Settings",
-                command=self._show_notification_settings,
-                font=('Arial', 9)
-            ).pack(side=tk.RIGHT, padx=2)
+        tk.Button(
+            settings_frame,
+            text="🔔 Notification Settings",
+            command=self._show_notification_settings,
+            font=('Arial', 9)
+        ).pack(side=tk.RIGHT, padx=2)
         
         tk.Button(
             settings_frame,
@@ -496,9 +494,6 @@ class NoticesGadget(GadgetBase):
     
     def _get_filtered_and_sorted_notices(self) -> list:
         """Get notices based on current filter, search, and sort."""
-        if not self.store:
-            return []
-            
         # Get base list based on filter
         filter_val = self.filter_var.get() if self.filter_var else "all"
         
@@ -539,25 +534,25 @@ class NoticesGadget(GadgetBase):
         
         return notices
     
-    def _get_status_text(self, notice) -> str:
+    def _get_status_text(self, notice: Notice) -> str:
         """Get status text for a notice."""
         if notice.completed:
             return "Completed"
-        elif hasattr(notice, 'is_overdue') and notice.is_overdue():
+        elif notice.is_overdue():
             return "Overdue"
-        elif hasattr(notice, 'is_due_today') and notice.is_due_today():
+        elif notice.is_due_today():
             return "Due Today"
         elif notice.due_date:
             days = (notice.due_date - datetime.now()).days
             return f"In {days} days"
         return "No Due Date"
     
-    def _get_priority_text(self, notice) -> str:
+    def _get_priority_text(self, notice: Notice) -> str:
         """Get priority text with indicator."""
         indicators = {"high": "🔴 High", "medium": "🟡 Medium", "low": "🟢 Low"}
         return indicators.get(notice.priority, notice.priority.capitalize())
     
-    def _get_due_date_text(self, notice) -> str:
+    def _get_due_date_text(self, notice: Notice) -> str:
         """Get formatted due date text."""
         if not notice.due_date:
             return "-"
@@ -576,7 +571,7 @@ class NoticesGadget(GadgetBase):
     
     def _refresh_list(self):
         """Refresh the notices treeview."""
-        if not self.tree or not self.store:
+        if not self.tree:
             return
         
         # Clear existing items
@@ -599,9 +594,9 @@ class NoticesGadget(GadgetBase):
             # Determine tag based on status
             if notice.completed:
                 tag = 'completed'
-            elif hasattr(notice, 'is_overdue') and notice.is_overdue():
+            elif notice.is_overdue():
                 tag = 'overdue'
-            elif hasattr(notice, 'is_due_today') and notice.is_due_today():
+            elif notice.is_due_today():
                 tag = 'due_today'
             else:
                 tag = 'normal'
@@ -734,10 +729,6 @@ class NoticesGadget(GadgetBase):
     
     def _show_notification_settings(self):
         """Show notification settings dialog."""
-        if not NOTIFICATIONS_AVAILABLE:
-            messagebox.showinfo("Not Available", "Notification system not available.")
-            return
-            
         dialog = NotificationSettingsDialog(self.window, self.reminder_settings)
         if dialog.result:
             # Restart reminder thread with new settings
@@ -773,7 +764,7 @@ class NoticesGadget(GadgetBase):
 class NoticeDialog:
     """Dialog for adding/editing notices with comprehensive form."""
     
-    def __init__(self, parent, store, notice=None):
+    def __init__(self, parent, store: NoticesStore, notice: Notice = None):
         self.store = store
         self.notice = notice
         self.result = False

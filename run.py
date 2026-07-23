@@ -488,7 +488,7 @@ class WMCtrlTray:
 			btn = tk.Button(
 				self.desktop_buttons_frame,
 				text=str(i+1),
-				width=2,
+				width=4,
 				height=1,
 				bg=inactive_bg,
 				fg="white",
@@ -589,7 +589,7 @@ class WMCtrlTray:
 		self.gadget_config_btn = tk.Button(
 			self.time_frame,
 			text="⚙",
-			width=2,
+			width=4,
 			height=1,
 			bg='gray',
 			fg='white',
@@ -626,7 +626,7 @@ class WMCtrlTray:
 			btn = tk.Button(
 				gadget_container,
 				text=gadget.get_icon(),
-				width=4,
+				width=8,
 				height=1,
 				bg='gray',
 				fg='white',
