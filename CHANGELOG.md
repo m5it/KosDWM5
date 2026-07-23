@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.4] - 2026-07-23
+
+### Changed
+- Auto-incremented version from 1.0.3
+- Files changed: __pycache__/remove_from_history.cpython-314.pyc, remove_from_history.py
+
+
 ## [1.0.3] - 2026-07-23
 
 ### Changed
