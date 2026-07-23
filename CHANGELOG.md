@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3] - 2026-07-23
+
+### Changed
+- Auto-incremented version from 1.0.2
+- Files changed: run.out
+
+
 ## [1.0.2] - 2026-07-23
 
 ### Changed
