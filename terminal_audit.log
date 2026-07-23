@@ -39,3 +39,272 @@
 [2026-07-23 16:25:07] CMD: find ../KosDB -name clear* -type f | SUCCESS: True | OUTPUT_LEN: 23
 [2026-07-23 16:25:11] CMD: cat ../KosDB/clearcache.sh | SUCCESS: True | OUTPUT_LEN: 93
 [2026-07-23 16:25:30] CMD: chmod +x clearcache.py | SUCCESS: True | OUTPUT_LEN: 0
+[2026-07-23 16:41:11] CMD: python remove_from_history.py out.out | SUCCESS: True | OUTPUT_LEN: 4515
+[2026-07-23 16:41:27] CMD: python -c 
+import sys
+sys.path.insert(0, 'src')
+
+from gadgets import GadgetManager, GadgetBase, HelloWorldGadget
+
+# Test 1: Create GadgetManager
+print('Testing GadgetManager...')
+gm = GadgetManager()
+print(f'  Gadgets dir: {gm._gadgets_dir}')
+print(f'  Config path: {gm._config_path}')
+
+# Test 2: Discover gadgets
+print('\nDiscovering gadgets...')
+available = gm.discover_gadgets()
+print(f'  Available: {list(available.keys())}')
+
+# Test 3: Get gadget info
+print('\nGadget info:')
+for name in available:
+    info = gm.get_gadget_info(name)
+    print(f'  {name}: {info["icon"]} - {info["description"][:50]}...')
+
+# Test 4: Check enabled gadgets
+print('\nEnabled gadgets:')
+enabled = gm.get_enabled_gadgets()
+print(f'  Count: {len(enabled)}')
+
+print('\n✓ Gadget system working correctly')
+ | SUCCESS: True | OUTPUT_LEN: 418
+[2026-07-23 16:41:53] CMD: python -c 
+import sys
+sys.path.insert(0, 'src')
+
+from gadgets import GadgetManager, GadgetBase, HelloWorldGadget
+
+# Test 1: Create GadgetManager (this calls _discover_gadgets in __init__)
+print('Testing GadgetManager...')
+gm = GadgetManager()
+print(f'  Gadgets dir: {gm._gadgets_dir}')
+print(f'  Config path: {gm._config_path}')
+
+# Test 2: Get available gadgets
+print('\nAvailable gadgets:')
+available = gm.get_available_gadgets()
+print(f'  Names: {available}')
+
+# Test 3: Get gadget info
+print('\nGadget info:')
+for name in available:
+    info = gm.get_gadget_info(name)
+    if info:
+        print(f'  {name}: icon={info["icon"]}, source={info["source"]}')
+
+# Test 4: Check enabled gadgets
+print('\nEnabled gadgets:')
+enabled = gm.get_enabled_gadgets()
+print(f'  Count: {len(enabled)}')
+for g in enabled:
+    print(f'    - {g.get_name()}: {g.get_icon()}')
+
+# Test 5: Check load errors
+print('\nLoad errors:')
+errors = gm.get_load_errors()
+if errors:
+    for e in errors:
+        print(f'  ERROR: {e}')
+else:
+    print('  None')
+
+print('\n✓ Gadget system working correctly')
+ | SUCCESS: True | OUTPUT_LEN: 340
+[2026-07-23 16:42:04] CMD: python AUTOVERSION.py -c | SUCCESS: True | OUTPUT_LEN: 6
+[2026-07-23 16:42:08] CMD: ls -la .git/hooks/pre-commit | SUCCESS: True | OUTPUT_LEN: 63
+[2026-07-23 16:42:55] CMD: python -c 
+import sys
+sys.path.insert(0, 'src')
+
+# Test 1: NoticesStore
+print('Testing NoticesStore...')
+from notices_store import NoticesStore, Notice
+from datetime import datetime, timedelta
+
+store = NoticesStore()
+print(f'  Store path: {store._data_path}')
+
+# Create test notice
+notice = store.create(
+    title='Test Notice',
+    content='Test content',
+    due_date=datetime.now() + timedelta(days=1),
+    priority='high'
+)
+print(f'  Created: {notice.title} (ID: {notice.id[:8]}...)')
+
+# Query
+active = store.get_active()
+print(f'  Active notices: {len(active)}')
+
+# Stats
+stats = store.get_stats()
+print(f'  Stats: {stats}')
+
+# Cleanup
+store.delete(notice.id)
+print('  Cleanup done')
+
+print('\n✓ NoticesStore working')
+ | SUCCESS: True | OUTPUT_LEN: 295
+[2026-07-23 16:42:59] CMD: python -c 
+import sys
+sys.path.insert(0, 'src')
+
+# Test 2: Notifications system (without Flask)
+print('Testing Notifications...')
+try:
+    from notifications import ReminderSettings, DismissedReminders
+    settings = ReminderSettings()
+    print(f'  Settings file: {settings.SETTINGS_FILE}')
+    
+    dismissed = DismissedReminders()
+    print(f'  Dismissed file: {dismissed.DISMISSED_FILE}')
+    
+    print('\n✓ Notifications module imports OK')
+except Exception as e:
+    print(f'  Error: {e}')
+ | SUCCESS: True | OUTPUT_LEN: 195
+[2026-07-23 16:43:19] CMD: python -c 
+import ast
+import sys
+from pathlib import Path
+
+def check_imports(file_path):
+    '''Check for unused imports in a Python file.'''
+    try:
+        with open(file_path, 'r') as f:
+            tree = ast.parse(f.read())
+        
+        # Get all imports
+        imports = []
+        used_names = set()
+        
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    imports.append(alias.name)
+            elif isinstance(node, ast.ImportFrom):
+                module = node.module or ''
+                for alias in node.names:
+                    name = alias.asname or alias.name
+                    imports.append(f'{module}.{alias.name}')
+            
+            # Check for name usage (simple check)
+            elif isinstance(node, ast.Name):
+                used_names.add(node.id)
+        
+        return imports, used_names
+    except SyntaxError as e:
+        return [], set()
+
+# Check main source files
+src_files = [
+    'src/gadgets.py',
+    'src/notices_store.py', 
+    'src/notices_api.py',
+    'src/notifications.py',
+    'src/version.py'
+]
+
+print('Checking imports in source files...')
+for file_path in src_files:
+    if Path(file_path).exists():
+        imports, used = check_imports(file_path)
+        print(f'\n{file_path}:')
+        print(f'  Imports: {len(imports)}')
+        print(f'  Sample: {imports[:3] if imports else "None"}')
+ | SUCCESS: True | OUTPUT_LEN: 426
+[2026-07-23 16:43:50] CMD: python -c 
+import re
+from pathlib import Path
+
+def find_hardcoded_paths(directory):
+    '''Find hardcoded paths in Python files.'''
+    patterns = [
+        r'Path\.home\(\)',
+        r'\.config/',
+        r'\"/home/',
+        r'\"/usr/',
+        r'\"/opt/',
+        r'os\.path\.expanduser',
+        r'__file__',
+    ]
+    
+    results = []
+    
+    for py_file in Path(directory).rglob('*.py'):
+        try:
+            with open(py_file, 'r') as f:
+                content = f.read()
+            
+            for i, line in enumerate(content.split('\n'), 1):
+                for pattern in patterns:
+                    if re.search(pattern, line):
+                        results.append((str(py_file), i, line.strip()))
+                        break
+        except Exception:
+            pass
+    
+    return results
+
+print('Searching for hardcoded paths in src/...')
+results = find_hardcoded_paths('src')
+
+if results:
+    print(f'\nFound {len(results)} potential hardcoded paths:\n')
+    for file, line, text in results[:20]:  # Show first 20
+        print(f'{file}:{line}')
+        print(f'  {text[:80]}')
+        print()
+else:
+    print('No hardcoded paths found')
+ | SUCCESS: True | OUTPUT_LEN: 922
+[2026-07-23 16:44:14] CMD: python -c 
+import re
+from pathlib import Path
+
+def check_error_handling(file_path):
+    '''Check error handling patterns in Python file.'''
+    try:
+        with open(file_path, 'r') as f:
+            content = f.read()
+        
+        # Count error handling patterns
+        try_count = len(re.findall(r'\btry\b:', content))
+        except_count = len(re.findall(r'\bexcept\b', content))
+        raise_count = len(re.findall(r'\braise\b', content))
+        bare_except = len(re.findall(r'except\s*:', content))  # bare except (bad)
+        
+        # Check for print statements in except blocks
+        print_in_except = len(re.findall(r'except[^:]*:[^\n]*\n[^\n]*print\(', content, re.DOTALL))
+        
+        return {
+            'try': try_count,
+            'except': except_count,
+            'raise': raise_count,
+            'bare_except': bare_except,
+            'print_in_except': print_in_except
+        }
+    except Exception as e:
+        return {'error': str(e)}
+
+files = [
+    'src/gadgets.py',
+    'src/notices_store.py',
+    'src/notifications.py',
+    'src/notices_api.py'
+]
+
+print('Error handling analysis:')
+print('=' * 60)
+
+for f in files:
+    if Path(f).exists():
+        result = check_error_handling(f)
+        print(f'\n{f}:')
+        for k, v in result.items():
+            print(f'  {k}: {v}')
+ | SUCCESS: True | OUTPUT_LEN: 452

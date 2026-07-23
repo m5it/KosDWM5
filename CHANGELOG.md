@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.6] - 2026-07-23
+
+### Changed
+- Auto-incremented version from 1.0.5
+- Files changed: HISTORY.md, README.md, __pycache__/remove_from_history.cpython-314.pyc, background.log, current_task.txt and 4 more
+
+
 ## [1.0.5] - 2026-07-23
 
 ### Changed
