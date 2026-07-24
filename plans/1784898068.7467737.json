@@ -3,7 +3,7 @@
   "title": "Notices Gadget UI Improvements",
   "instructions": "Fix and improve the Notices Gadget UI/UX:\n\n1. Fix click behavior: Single click = select only, Double click = open edit dialog (same as add)\n2. Fix badge update: Panel icon number should decrease when deleting notices\n3. Unify add/edit: Both should use the same rich text editor panel with all controls\n4. Fix list display: Strip HTML tags so raw HTML is not visible in the notices list\n\nEnsure all changes maintain the dark theme and proper dialog behavior.",
   "startTimestamp": 1784898068.7467802,
-  "endTimestamp": null,
+  "endTimestamp": 1784899601.4964614,
   "tasks": {
     "1784898071.5605338": {
       "id": "1784898071.5605338",

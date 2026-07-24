@@ -2654,3 +2654,11 @@ for i in range(195, min(210, len(lines))):
 [2026-07-24 14:20:52] CMD: bash -c sed -n '575,600p' src/notices_gadget_pyqt5.py | SUCCESS: True | OUTPUT_LEN: 898
 [2026-07-24 14:21:03] CMD: bash -c sed -n '590,610p' src/notices_gadget_pyqt5.py | SUCCESS: True | OUTPUT_LEN: 651
 [2026-07-24 14:21:20] CMD: bash -c sed -n '580,610p' src/notices_gadget_pyqt5.py | SUCCESS: True | OUTPUT_LEN: 884
+[2026-07-24 14:26:06] CMD: bash -c grep -A10 'def strip_html' src/notices_gadget_pyqt5.py | SUCCESS: True | OUTPUT_LEN: 362
+[2026-07-24 14:28:19] CMD: bash -c sed -n '40,80p' src/notices_gadget_pyqt5.py | SUCCESS: True | OUTPUT_LEN: 1440
+[2026-07-24 14:29:34] CMD: bash -c grep -A15 'def strip_html' src/notices_gadget_pyqt5.py | SUCCESS: True | OUTPUT_LEN: 429
+[2026-07-24 14:30:49] CMD: bash -c grep -A5 'def _refresh_notices_list' src/notices_gadget_pyqt5.py | SUCCESS: True | OUTPUT_LEN: 181
+[2026-07-24 14:30:53] CMD: bash -c sed -n '470,510p' src/notices_gadget_pyqt5.py | SUCCESS: True | OUTPUT_LEN: 1243
+[2026-07-24 14:30:57] CMD: bash -c head -30 src/notices_gadget_pyqt5.py | SUCCESS: True | OUTPUT_LEN: 861
+[2026-07-24 14:31:01] CMD: bash -c sed -n '40,80p' src/notices_gadget_pyqt5.py | SUCCESS: True | OUTPUT_LEN: 1440
+[2026-07-24 14:31:09] CMD: bash -c sed -n '26,45p' src/notices_gadget_pyqt5.py | SUCCESS: True | OUTPUT_LEN: 570

@@ -28,13 +28,19 @@ def strip_html(html):
     """Strip HTML tags from text for plain text display"""
     if not html:
         return ""
-    text = re.sub(r'<[^>]+>', '', html)
+    # Remove style and script blocks first
+    text = re.sub(r'<style[^>]*>.*?</style>', '', html, flags=re.DOTALL | re.IGNORECASE)
+    text = re.sub(r'<script[^>]*>.*?</script>', '', text, flags=re.DOTALL | re.IGNORECASE)
+    # Remove HTML tags
+    text = re.sub(r'<[^>]+>', '', text)
+    # Replace HTML entities
     text = text.replace('&nbsp;', ' ')
     text = text.replace('&lt;', '<')
     text = text.replace('&gt;', '>')
     text = text.replace('&amp;', '&')
     text = text.replace('&quot;', '"')
-    return text
+    # Clean up whitespace
+    return ' '.join(text.split())
 
 
 class Notice:

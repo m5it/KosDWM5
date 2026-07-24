@@ -1,7 +1,7 @@
 # Plan: Notices Gadget UI Improvements
 ## ID: 1784898068.7467737
 ## Created: 2026-07-24 14:01:08
-## Status: in_progress
+## Status: completed
 
 ### Goal:
 Fix and improve the Notices Gadget UI/UX:
@@ -18,8 +18,9 @@ Ensure all changes maintain the dark theme and proper dialog behavior.
    ID: 1784898071.5605338
    Progress logs: 1 entries
 
-2. [pending] Verify Notices Data Loading
+2. [in_progress] Verify Notices Data Loading
    ID: 1784898075.4183316
+   Progress logs: 1 entries
 
 3. [pending] Fix List Widget Layout and Sizing
    ID: 1784898079.7203348
