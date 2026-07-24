@@ -225,7 +225,18 @@ class GadgetManager:
         """Get all available gadgets"""
         return list(self.gadgets.values())
     
-    def enable_gadget(self, name):
+    def get_gadget_info(self, name):
+        """Get gadget info as dictionary"""
+        if name in self.gadgets:
+            gadget = self.gadgets[name]
+            return {
+                'name': gadget.get_name(),
+                'icon': gadget.get_icon(),
+                'description': gadget.get_description(),
+                'enabled': self.is_enabled(name),
+                'source': 'built-in' if name in ['hello_world', 'test_gadget', 'notices'] else 'user'
+            }
+        return None
         """Enable a gadget"""
         if name in self.gadgets and name not in self.enabled_gadgets:
             self.enabled_gadgets.append(name)

@@ -1,47 +1,37 @@
-# Plan: Notices Gadget UI Improvements
-## ID: 1784898068.7467737
-## Created: 2026-07-24 14:01:08
-## Status: completed
+# Plan: Add About Window and HTTP Panel API for Gadgets
+## ID: 1784901546.4543912
+## Created: 2026-07-24 14:59:06
+## Status: in_progress
 
 ### Goal:
-Fix and improve the Notices Gadget UI/UX:
+Create two new features:
 
-1. Fix click behavior: Single click = select only, Double click = open edit dialog (same as add)
-2. Fix badge update: Panel icon number should decrease when deleting notices
-3. Unify add/edit: Both should use the same rich text editor panel with all controls
-4. Fix list display: Strip HTML tags so raw HTML is not visible in the notices list
+1. **About Window**: Add to the right-side dropdown menu (where gadget/panel configs are) at the bottom. Show KosDWM version, credits, and system info.
 
-Ensure all changes maintain the dark theme and proper dialog behavior.
+2. **HTTP Panel API**: Create a shared HTTP API service in the panel that gadgets can register endpoints with:
+   - Panel runs a single HTTP server (e.g., port 8080)
+   - Gadgets register their endpoints: `panel.api.register("/notices", handler)`
+   - Gadgets can also register multiple endpoints: `/notices/add`, `/notices/delete`, etc.
+   - Avoids duplicate servers - each gadget doesn't run its own HTTP server
+   - Centralized API management through the panel
 
-### Tasks (9):
-1. [in_progress] Debug QListWidget Visibility and Layout
-   ID: 1784898071.5605338
-   Progress logs: 1 entries
+Design the API so gadgets can easily expose HTTP endpoints without managing their own servers.
 
-2. [in_progress] Verify Notices Data Loading
-   ID: 1784898075.4183316
-   Progress logs: 1 entries
+### Tasks (5):
+1. [pending] Add About Window to Dropdown Menu
+   ID: 1784901551.9890764
 
-3. [pending] Fix List Widget Layout and Sizing
-   ID: 1784898079.7203348
+2. [pending] Create HTTP Panel API Service
+   ID: 1784901558.0810134
 
-4. [pending] Test and Verify Notices Display
-   ID: 1784898082.6430638
+3. [pending] Create Gadget API Registration Interface
+   ID: 1784901563.0429819
 
-5. [pending] Fix Click Behavior - Single Select, Double Click Edit
-   ID: 1784899165.746007
+4. [pending] Update Notices Gadget to Use Panel API
+   ID: 1784901567.3446538
 
-6. [pending] Fix Badge Update on Delete
-   ID: 1784899170.2516267
-
-7. [pending] Unify Add and Edit Dialogs
-   ID: 1784899173.9409602
-
-8. [pending] Strip HTML in Notices List Display
-   ID: 1784899178.239329
-
-9. [pending] Test All Notice Operations
-   ID: 1784899181.925664
+5. [pending] Test and Document HTTP Panel API
+   ID: 1784901572.2596061
 
 ---
 

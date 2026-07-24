@@ -1,0 +1,54 @@
+{
+  "id": "1784901546.4543912",
+  "title": "Add About Window and HTTP Panel API for Gadgets",
+  "instructions": "Create two new features:\n\n1. **About Window**: Add to the right-side dropdown menu (where gadget/panel configs are) at the bottom. Show KosDWM version, credits, and system info.\n\n2. **HTTP Panel API**: Create a shared HTTP API service in the panel that gadgets can register endpoints with:\n   - Panel runs a single HTTP server (e.g., port 8080)\n   - Gadgets register their endpoints: `panel.api.register(\"/notices\", handler)`\n   - Gadgets can also register multiple endpoints: `/notices/add`, `/notices/delete`, etc.\n   - Avoids duplicate servers - each gadget doesn't run its own HTTP server\n   - Centralized API management through the panel\n\nDesign the API so gadgets can easily expose HTTP endpoints without managing their own servers.",
+  "startTimestamp": 1784901546.4543972,
+  "endTimestamp": null,
+  "tasks": {
+    "1784901551.9890764": {
+      "id": "1784901551.9890764",
+      "status": "in_progress",
+      "instruction": "Add an About window to the right-side configuration dropdown:\n- Add \"About KosDWM\" option at the bottom of the dropdown menu\n- Create About dialog showing:\n  - KosDWM version (from AUTOVERSION)\n  - Credits (Created by B.K., OpenCode, etc.)\n  - System info (Python version, Qt version, etc.)\n- Use dark theme consistent with other dialogs",
+      "startTimestamp": 1784901577.17601,
+      "endTimestamp": null,
+      "log": [
+        {
+          "timestamp": 1784901577.1765044,
+          "text": "Build started"
+        }
+      ]
+    },
+    "1784901558.0810134": {
+      "id": "1784901558.0810134",
+      "status": "pending",
+      "instruction": "Create a centralized HTTP API service in the panel:\n- Panel runs HTTP server on configurable port (default 8080)\n- Create PanelAPI class that manages endpoints\n- Gadgets register endpoints: `panel.api.register(\"/endpoint\", handler_func)`\n- Support GET/POST methods\n- Handler functions receive request data and return response\n- Store registered endpoints in a dictionary: {path: (handler, methods)}\n- Threaded HTTP server to avoid blocking UI",
+      "startTimestamp": null,
+      "endTimestamp": null,
+      "log": []
+    },
+    "1784901563.0429819": {
+      "id": "1784901563.0429819",
+      "status": "pending",
+      "instruction": "Allow gadgets to register HTTP endpoints with the panel:\n- Gadgets receive panel reference via `set_panel()`\n- Gadgets can call `self.panel.api.register()` to add endpoints\n- Create example in NoticesGadget showing how to register:\n  - GET /notices - list all notices\n  - POST /notices/add - add new notice\n  - POST /notices/delete - delete notice\n- Ensure thread-safe access to gadget data",
+      "startTimestamp": null,
+      "endTimestamp": null,
+      "log": []
+    },
+    "1784901567.3446538": {
+      "id": "1784901567.3446538",
+      "status": "pending",
+      "instruction": "Refactor NoticesGadget to use the shared Panel HTTP API:\n- Remove any direct HTTP server code from NoticesGadget\n- Register endpoints with panel in `__init__` or `on_load`:\n  - GET /api/notices - get all notices\n  - POST /api/notices - create new notice\n  - DELETE /api/notices/<id> - delete notice\n- Ensure handlers are thread-safe\n- Test API with curl or browser",
+      "startTimestamp": null,
+      "endTimestamp": null,
+      "log": []
+    },
+    "1784901572.2596061": {
+      "id": "1784901572.2596061",
+      "status": "pending",
+      "instruction": "Test the complete HTTP Panel API:\n- Test About window displays correctly\n- Test HTTP API with curl commands:\n  - `curl http://localhost:8080/api/notices`\n  - `curl -X POST http://localhost:8080/api/notices -d '{\"title\":\"Test\"}'`\n- Verify multiple gadgets can register endpoints\n- Document the API for gadget developers\n- Update AGENTS.md with new features",
+      "startTimestamp": null,
+      "endTimestamp": null,
+      "log": []
+    }
+  }
+}

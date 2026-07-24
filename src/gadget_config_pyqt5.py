@@ -111,7 +111,7 @@ class GadgetConfigDialog(QDialog):
         container_layout.setAlignment(Qt.AlignTop)
         
         # Get available gadgets
-        available = self.gadget_manager.get_available_gadgets()
+        available = self.gadget_manager.get_all_gadgets()
         
         if not available:
             label = QLabel("No gadgets available")
