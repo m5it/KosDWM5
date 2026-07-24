@@ -1,4 +1,4 @@
-Plan: Convert Gadget Button to Configuration Dropdown
+Plan: Apply Dark Theme to All Configuration Dialogs
 Progress: 5/5 completed (0 blocked)
 No task in progress.
-Updated: 2026-07-23 23:53:40
+Updated: 2026-07-24 13:24:44

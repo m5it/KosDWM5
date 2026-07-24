@@ -12,7 +12,7 @@ from pathlib import Path
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTreeWidget, QTreeWidgetItem, QTextEdit, QLineEdit,
-    QFormLayout, QGroupBox, QMessageBox, QInputDialog, QFileDialog,
+    QFormLayout, QGroupBox, QMessageBox, QInputDialog,
     QSplitter, QWidget, QComboBox, QSpinBox, QCheckBox
 )
 from PyQt5.QtCore import Qt
@@ -28,18 +28,19 @@ class MenuConfigDialog(QDialog):
         self.setWindowTitle("📝 Menu Configuration")
         self.setGeometry(100, 100, 800, 600)
         
-        # Light theme styling
+        # Dark theme styling
         self.setStyleSheet("""
             QDialog {
-                background-color: #f5f5f5;
+                background-color: #1a1a1a;
             }
             QLabel {
-                color: #333333;
+                color: #ffffff;
                 font-size: 12px;
             }
             QGroupBox {
                 font-weight: bold;
-                border: 1px solid #cccccc;
+                color: #ffffff;
+                border: 1px solid #444444;
                 border-radius: 5px;
                 margin-top: 10px;
                 padding-top: 10px;
@@ -50,15 +51,15 @@ class MenuConfigDialog(QDialog):
                 padding: 0 5px;
             }
             QPushButton {
-                background-color: #4a90d9;
-                color: white;
-                border: none;
+                background-color: #4a4a4a;
+                color: #ffffff;
+                border: 1px solid #555555;
                 padding: 8px 16px;
                 border-radius: 4px;
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #357abd;
+                background-color: #5a5a5a;
             }
             QPushButton#danger {
                 background-color: #d9534f;
@@ -67,24 +68,57 @@ class MenuConfigDialog(QDialog):
                 background-color: #c9302c;
             }
             QTreeWidget {
-                border: 1px solid #cccccc;
+                border: 1px solid #444444;
                 border-radius: 5px;
-                background-color: white;
+                background-color: #2d2d2d;
+                color: #ffffff;
             }
             QTreeWidget::item:selected {
                 background-color: #4a90d9;
-                color: white;
+                color: #ffffff;
+            }
+            QTreeWidget::item:hover {
+                background-color: #3d3d3d;
             }
             QTextEdit {
-                border: 1px solid #cccccc;
+                border: 1px solid #444444;
                 border-radius: 3px;
-                background-color: white;
+                background-color: #2d2d2d;
+                color: #ffffff;
                 font-family: monospace;
             }
             QLineEdit {
-                border: 1px solid #cccccc;
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #444444;
                 border-radius: 3px;
                 padding: 5px;
+            }
+            QComboBox {
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #444444;
+                border-radius: 3px;
+                padding: 5px;
+            }
+            QComboBox::drop-down {
+                border: none;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #444444;
+            }
+            QSpinBox {
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #444444;
+                border-radius: 3px;
+                padding: 5px;
+            }
+            QCheckBox {
+                color: #ffffff;
+                spacing: 8px;
             }
         """)
         
@@ -102,11 +136,11 @@ class MenuConfigDialog(QDialog):
         
         # Header
         header = QLabel("Auto-Generative Menu Manager")
-        header.setStyleSheet("font-size: 18px; font-weight: bold; color: #333333;")
+        header.setStyleSheet("font-size: 18px; font-weight: bold; color: #ffffff;")
         layout.addWidget(header)
         
         desc = QLabel("Manage menus in: " + str(self.menus_dir))
-        desc.setStyleSheet("color: #666666;")
+        desc.setStyleSheet("color: #aaaaaa;")
         layout.addWidget(desc)
         
         # Splitter for tree and editor
@@ -303,12 +337,12 @@ class MenuConfigDialog(QDialog):
                 else:
                     self.preview.setText("Content file not found")
             except Exception as e:
-                self.preview.setText(f"Error loading config: {e}")
+                self.preview.setText("Error loading config: " + str(e))
         elif py_files:
             # Script menu
             self.type_combo.setCurrentIndex(2)
             self.leaf_group.setVisible(False)
-            self.preview.setText(f"Python script: {py_files[0].name}")
+            self.preview.setText("Python script: " + py_files[0].name)
         else:
             # Branch menu
             self.type_combo.setCurrentIndex(0)
@@ -328,7 +362,7 @@ class MenuConfigDialog(QDialog):
                 new_path.mkdir(parents=True)
                 self.refresh_tree()
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to create menu:\n{e}")
+                QMessageBox.critical(self, "Error", "Failed to create menu:\n" + str(e))
     
     def new_folder(self):
         """Create a new folder in selected menu"""
@@ -357,11 +391,11 @@ class MenuConfigDialog(QDialog):
                 
                 # Create sample content
                 with open(new_path / "content.html", 'w') as f:
-                    f.write(f"<h1>{name}</h1>\n<p>Content for {name}</p>\n")
+                    f.write("<h1>" + name + "</h1>\n<p>Content for " + name + "</p>\n")
                 
                 self.refresh_tree()
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to create folder:\n{e}")
+                QMessageBox.critical(self, "Error", "Failed to create folder:\n" + str(e))
     
     def delete_item(self):
         """Delete selected menu item"""
@@ -377,7 +411,7 @@ class MenuConfigDialog(QDialog):
         reply = QMessageBox.question(
             self,
             "Confirm Delete",
-            f"Delete '{current.text(0)}' and all its contents?",
+            "Delete '" + current.text(0) + "' and all its contents?",
             QMessageBox.Yes | QMessageBox.No
         )
         
@@ -388,7 +422,7 @@ class MenuConfigDialog(QDialog):
                 self.editor_group.setEnabled(False)
                 self.preview.clear()
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to delete:\n{e}")
+                QMessageBox.critical(self, "Error", "Failed to delete:\n" + str(e))
     
     def save_changes(self):
         """Save changes to config.json"""
@@ -415,4 +449,4 @@ class MenuConfigDialog(QDialog):
             QMessageBox.information(self, "Success", "Configuration saved!")
             self.refresh_tree()
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to save:\n{e}")
+            QMessageBox.critical(self, "Error", "Failed to save:\n" + str(e))

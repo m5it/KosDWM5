@@ -10,7 +10,7 @@ from pathlib import Path
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTabWidget, QWidget, QFormLayout, QLineEdit, QSpinBox,
-    QComboBox, QColorDialog, QFontDialog, QGroupBox, QMessageBox
+    QComboBox, QColorDialog, QFontDialog, QMessageBox
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QFont
@@ -26,18 +26,19 @@ class PanelConfigDialog(QDialog):
         self.setWindowTitle("⚙️ Panel Configuration")
         self.setGeometry(100, 100, 500, 400)
         
-        # Light theme styling
+        # Dark theme styling
         self.setStyleSheet("""
             QDialog {
-                background-color: #f5f5f5;
+                background-color: #1a1a1a;
             }
             QLabel {
-                color: #333333;
+                color: #ffffff;
                 font-size: 12px;
             }
             QGroupBox {
                 font-weight: bold;
-                border: 1px solid #cccccc;
+                color: #ffffff;
+                border: 1px solid #444444;
                 border-radius: 5px;
                 margin-top: 10px;
                 padding-top: 10px;
@@ -48,30 +49,57 @@ class PanelConfigDialog(QDialog):
                 padding: 0 5px;
             }
             QPushButton {
-                background-color: #4a90d9;
-                color: white;
-                border: none;
+                background-color: #4a4a4a;
+                color: #ffffff;
+                border: 1px solid #555555;
                 padding: 8px 16px;
                 border-radius: 4px;
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #357abd;
+                background-color: #5a5a5a;
             }
             QLineEdit {
-                border: 1px solid #cccccc;
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #444444;
                 border-radius: 3px;
                 padding: 5px;
             }
             QSpinBox {
-                border: 1px solid #cccccc;
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #444444;
                 border-radius: 3px;
                 padding: 5px;
             }
             QComboBox {
-                border: 1px solid #cccccc;
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #444444;
                 border-radius: 3px;
                 padding: 5px;
+            }
+            QComboBox::drop-down {
+                border: none;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #444444;
+            }
+            QTabWidget::pane {
+                background-color: #1a1a1a;
+                border: 1px solid #444444;
+            }
+            QTabBar::tab {
+                background-color: #2d2d2d;
+                color: #ffffff;
+                padding: 8px 16px;
+                border: 1px solid #444444;
+            }
+            QTabBar::tab:selected {
+                background-color: #4a4a4a;
             }
         """)
         
@@ -120,7 +148,6 @@ class PanelConfigDialog(QDialog):
             try:
                 with open(self.config_path, 'r') as f:
                     loaded = json.load(f)
-                    # Merge with defaults
                     for key, value in default_config.items():
                         if key in loaded:
                             if isinstance(value, dict):
@@ -182,7 +209,7 @@ class PanelConfigDialog(QDialog):
         cancel_btn.clicked.connect(self.reject)
         btn_layout.addWidget(cancel_btn)
         
-        save_btn = QPushButton("💾 Save")
+        save_btn = QPushButton("Save")
         save_btn.clicked.connect(self.save_and_close)
         btn_layout.addWidget(save_btn)
         
@@ -335,7 +362,6 @@ class PanelConfigDialog(QDialog):
         color = QColorDialog.getColor(QColor(current_color), self, "Choose Color")
         if color.isValid():
             self.config[section][key] = color.name()
-            # Update button
             if section == "panel" and key == "background_color":
                 self._update_color_button(self.panel_bg_btn, color.name())
             elif section == "buttons":
@@ -364,13 +390,9 @@ class PanelConfigDialog(QDialog):
     
     def _update_color_button(self, button, color):
         """Update button to show selected color"""
-        button.setStyleSheet(f"""
-            background-color: {color};
-            color: {'#ffffff' if QColor(color).lightness() < 128 else '#000000'};
-            border: 1px solid #cccccc;
-            padding: 5px 10px;
-            min-width: 100px;
-        """)
+        text_color = '#ffffff' if QColor(color).lightness() < 128 else '#000000'
+        style = "background-color: %s; color: %s; border: 1px solid #555555; padding: 5px 10px; min-width: 100px;" % (color, text_color)
+        button.setStyleSheet(style)
         button.setText(color)
     
     def _choose_clock_font(self):
@@ -390,14 +412,13 @@ class PanelConfigDialog(QDialog):
     
     def _update_font_button(self, button, clock_config):
         """Update font button text"""
-        font_str = f"{clock_config['font_family']} {clock_config['font_size']}pt"
+        font_str = "%s %spt" % (clock_config['font_family'], clock_config['font_size'])
         if clock_config['bold']:
             font_str += " Bold"
         button.setText(font_str)
     
     def save_and_close(self):
         """Save configuration and close dialog"""
-        # Update config from UI values
         self.config["panel"]["height"] = self.panel_height.value()
         self.config["buttons"]["font_size"] = self.btn_font_size.value()
         self.config["clock"]["format"] = self.clock_format.currentText()

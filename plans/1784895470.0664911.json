@@ -1,0 +1,54 @@
+{
+  "id": "1784895470.0664911",
+  "title": "Apply Dark Theme to All Configuration Dialogs",
+  "instructions": "Review and update all configuration dialogs to use a consistent dark theme:\n- Dark background (#1a1a1a or #2d2d2d)\n- White/light text (#ffffff or #eeeeee)\n- Consistent styling across all dialogs\n- Update: Panel Config, Menu Config, DateTime Config, Gadget Config, and menu leaf windows",
+  "startTimestamp": 1784895470.0665045,
+  "endTimestamp": 1784895884.796412,
+  "tasks": {
+    "1784895473.8489826": {
+      "id": "1784895473.8489826",
+      "status": "completed",
+      "instruction": "Modify src/panel_config_pyqt5.py to use dark theme:\n- Change QDialog background-color to #1a1a1a\n- Change QLabel color to #ffffff\n- Change QGroupBox to dark theme with light text\n- Change QPushButton to dark theme\n- Change input widgets (QLineEdit, QSpinBox, QComboBox) to dark background with light text\n- Ensure all text is readable on dark background",
+      "startTimestamp": 1784895518.9156597,
+      "endTimestamp": 1784895679.1707795,
+      "log": [
+        {
+          "timestamp": 1784895518.9163718,
+          "text": "Build started"
+        }
+      ]
+    },
+    "1784895477.6439128": {
+      "id": "1784895477.6439128",
+      "status": "completed",
+      "instruction": "Modify src/menu_config_pyqt5.py to use dark theme:\n- Change QDialog background-color to #1a1a1a\n- Change QLabel color to #ffffff\n- Change QTreeWidget to dark theme with light text\n- Change QTextEdit to dark background with light text\n- Change QPushButton to dark theme\n- Change QLineEdit and QComboBox to dark theme\n- Ensure tree items are visible with light text",
+      "startTimestamp": 1784895679.1707814,
+      "endTimestamp": 1784895724.2899172,
+      "log": []
+    },
+    "1784895508.0613165": {
+      "id": "1784895508.0613165",
+      "status": "completed",
+      "instruction": "Modify src/datetime_config_pyqt5.py to use dark theme:\n- Change QDialog background-color to #1a1a1a\n- Change QLabel color to #ffffff\n- Change QGroupBox to dark theme with light text\n- Change QPushButton to dark theme\n- Change QComboBox and QSpinBox to dark background with light text\n- Change QCheckBox text to light color\n- Ensure preview area uses dark theme",
+      "startTimestamp": 1784895724.2899199,
+      "endTimestamp": 1784895771.8468719,
+      "log": []
+    },
+    "1784895511.9483228": {
+      "id": "1784895511.9483228",
+      "status": "completed",
+      "instruction": "Modify src/gadget_config_pyqt5.py to use dark theme:\n- Change QDialog background-color to #1a1a1a\n- Change QLabel color to #ffffff\n- Change QFrame gadget items to dark background with light text\n- Change QPushButton to dark theme\n- Change QScrollArea to dark theme\n- Change QCheckBox to dark theme with light text",
+      "startTimestamp": 1784895771.8468754,
+      "endTimestamp": 1784895795.0903397,
+      "log": []
+    },
+    "1784895516.0443602": {
+      "id": "1784895516.0443602",
+      "status": "completed",
+      "instruction": "Modify src/menus_pyqt5.py leaf menu windows to use dark theme:\n- Change QDialog background-color to #1a1a1a\n- Change QTextEdit to dark background (#000000) with light text (#00ff00 or #ffffff)\n- Change QPushButton to dark theme\n- Ensure both static content and script output windows use dark theme\n- Keep terminal-like appearance for script output (black bg, green text)",
+      "startTimestamp": 1784895795.0903418,
+      "endTimestamp": 1784895884.7952952,
+      "log": []
+    }
+  }
+}

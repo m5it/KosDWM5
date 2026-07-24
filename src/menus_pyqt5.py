@@ -142,43 +142,56 @@ class MenuManager:
         dialog.setWindowTitle(title)
         dialog.setGeometry(100, 100, 600, 400)
         
-        # Dark terminal-like theme for script output, light for content
+        # Dark theme for all leaf menus
         if script_cmd:
+            # Terminal-like for script output
             dialog.setStyleSheet("""
                 QDialog { background-color: #1a1a1a; }
                 QTextEdit { 
                     background-color: #000000; 
                     color: #00ff00; 
-                    border: none;
+                    border: 1px solid #333333;
+                    border-radius: 3px;
+                    padding: 10px;
                     font-family: monospace;
                     font-size: 11px;
                 }
                 QPushButton {
                     background-color: #4a4a4a;
-                    color: white;
-                    border: none;
-                    padding: 8px 16px;
+                    color: #ffffff;
+                    border: 1px solid #555555;
+                    padding: 10px 20px;
+                    border-radius: 4px;
+                    font-weight: bold;
                 }
-                QPushButton:hover { background-color: #555555; }
+                QPushButton:hover {
+                    background-color: #5a5a5a;
+                }
             """)
         else:
+            # Dark theme for static content
             dialog.setStyleSheet("""
-                QDialog { background-color: #f5f5f5; }
+                QDialog { background-color: #1a1a1a; }
                 QTextEdit { 
-                    background-color: white; 
-                    color: #333333; 
-                    border: 1px solid #cccccc;
+                    background-color: #2d2d2d; 
+                    color: #ffffff; 
+                    border: 1px solid #444444;
+                    border-radius: 3px;
+                    padding: 10px;
                     font-family: monospace;
                     font-size: 12px;
                 }
                 QPushButton {
-                    background-color: #4a90d9;
-                    color: white;
-                    border: none;
-                    padding: 8px 16px;
+                    background-color: #4a4a4a;
+                    color: #ffffff;
+                    border: 1px solid #555555;
+                    padding: 10px 20px;
                     border-radius: 4px;
+                    font-weight: bold;
                 }
-                QPushButton:hover { background-color: #357abd; }
+                QPushButton:hover {
+                    background-color: #5a5a5a;
+                }
             """)
         
         layout = QVBoxLayout(dialog)
@@ -279,9 +292,8 @@ class MenuManager:
                     lambda checked, p=script_path: self._run_script(p)
                 )
             elif item.get("type") == "leaf":
-                # Leaf menu - open content window with queued connection
+                # Leaf menu - open content window
                 action = menu.addAction(item["name"])
                 action.triggered.connect(
-                    lambda checked, m=item: self._open_leaf_menu(m),
-                    type=Qt.QueuedConnection
+                    lambda checked, m=item: self._open_leaf_menu(m)
                 )

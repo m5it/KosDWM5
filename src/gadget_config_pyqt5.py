@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
 Gadget Configuration Dialog for KosDWM PyQt5
+
+Configuration dialog for enabling/disabling gadgets
 """
 
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox
@@ -21,25 +23,25 @@ class GadgetConfigDialog(QDialog):
         self.setWindowTitle("Gadget Configuration")
         self.setGeometry(100, 100, 600, 500)
         
-        # Light theme styling - much more visible
+        # Dark theme styling
         self.setStyleSheet("""
             QDialog {
-                background-color: #f5f5f5;
+                background-color: #1a1a1a;
             }
             QLabel {
-                color: #333333;
+                color: #ffffff;
             }
             QLabel#header {
                 font-size: 18px;
                 font-weight: bold;
-                color: #333333;
+                color: #ffffff;
             }
             QLabel#description {
-                color: #666666;
+                color: #aaaaaa;
                 font-size: 13px;
             }
             QCheckBox {
-                color: #333333;
+                color: #ffffff;
                 spacing: 8px;
                 font-size: 14px;
             }
@@ -48,34 +50,33 @@ class GadgetConfigDialog(QDialog):
                 height: 18px;
             }
             QPushButton {
-                background-color: #4a90d9;
-                color: white;
-                border: none;
+                background-color: #4a4a4a;
+                color: #ffffff;
+                border: 1px solid #555555;
                 padding: 10px 20px;
                 border-radius: 5px;
                 font-size: 14px;
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #357abd;
+                background-color: #5a5a5a;
             }
             QPushButton:pressed {
-                background-color: #2a6299;
+                background-color: #6a6a6a;
             }
             QScrollArea {
-                border: 1px solid #cccccc;
-                background-color: white;
-                border-radius: 5px;
+                border: 1px solid #444444;
+                background-color: #2d2d2d;
             }
             QFrame#gadgetItem {
-                background-color: white;
-                border: 1px solid #dddddd;
+                background-color: #2d2d2d;
+                border: 1px solid #444444;
                 border-radius: 5px;
                 padding: 10px;
             }
             QFrame#gadgetItem:hover {
-                background-color: #f0f8ff;
-                border-color: #4a90d9;
+                background-color: #3d3d3d;
+                border-color: #555555;
             }
         """)
         
@@ -115,7 +116,7 @@ class GadgetConfigDialog(QDialog):
         if not available:
             label = QLabel("No gadgets available")
             label.setAlignment(Qt.AlignCenter)
-            label.setStyleSheet("color: gray; font-style: italic; padding: 50px;")
+            label.setStyleSheet("color: #888888; font-style: italic; padding: 50px;")
             container_layout.addWidget(label)
         else:
             for gadget_name in available:

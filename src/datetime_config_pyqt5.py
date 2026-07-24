@@ -27,18 +27,19 @@ class DateTimeConfigDialog(QDialog):
         self.setWindowTitle("🕐 Date & Time Configuration")
         self.setGeometry(100, 100, 450, 400)
         
-        # Light theme styling
+        # Dark theme styling
         self.setStyleSheet("""
             QDialog {
-                background-color: #f5f5f5;
+                background-color: #1a1a1a;
             }
             QLabel {
-                color: #333333;
+                color: #ffffff;
                 font-size: 12px;
             }
             QGroupBox {
                 font-weight: bold;
-                border: 1px solid #cccccc;
+                color: #ffffff;
+                border: 1px solid #444444;
                 border-radius: 5px;
                 margin-top: 10px;
                 padding-top: 10px;
@@ -49,29 +50,46 @@ class DateTimeConfigDialog(QDialog):
                 padding: 0 5px;
             }
             QPushButton {
-                background-color: #4a90d9;
-                color: white;
-                border: none;
+                background-color: #4a4a4a;
+                color: #ffffff;
+                border: 1px solid #555555;
                 padding: 8px 16px;
                 border-radius: 4px;
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #357abd;
+                background-color: #5a5a5a;
             }
             QComboBox {
-                border: 1px solid #cccccc;
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #444444;
                 border-radius: 3px;
                 padding: 5px;
                 min-width: 150px;
             }
+            QComboBox::drop-down {
+                border: none;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #444444;
+            }
             QSpinBox {
-                border: 1px solid #cccccc;
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #444444;
                 border-radius: 3px;
                 padding: 5px;
             }
             QCheckBox {
+                color: #ffffff;
                 spacing: 8px;
+            }
+            QCheckBox::indicator {
+                width: 18px;
+                height: 18px;
             }
         """)
         
@@ -86,12 +104,12 @@ class DateTimeConfigDialog(QDialog):
         default_config = {
             "datetime": {
                 "show_time": True,
-                "time_format": "24h",  # "12h" or "24h"
+                "time_format": "24h",
                 "show_seconds": False,
                 "show_date": False,
-                "date_format": "%Y-%m-%d",  # Python strftime format
-                "update_interval": 1000,  # milliseconds
-                "timezone": "local",  # "local" or "UTC"
+                "date_format": "%Y-%m-%d",
+                "update_interval": 1000,
+                "timezone": "local",
                 "font_family": "Arial",
                 "font_size": 10,
                 "bold": True,
@@ -113,7 +131,6 @@ class DateTimeConfigDialog(QDialog):
     def _save_config(self):
         """Save configuration to file"""
         try:
-            # Load existing config
             existing = {}
             if self.config_path.exists():
                 try:
@@ -122,7 +139,6 @@ class DateTimeConfigDialog(QDialog):
                 except:
                     pass
             
-            # Update with new datetime config
             existing["datetime"] = self.config["datetime"]
             
             self.config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -142,7 +158,7 @@ class DateTimeConfigDialog(QDialog):
         
         # Header
         header = QLabel("🕐 Clock Configuration")
-        header.setStyleSheet("font-size: 18px; font-weight: bold; color: #333333;")
+        header.setStyleSheet("font-size: 18px; font-weight: bold; color: #ffffff;")
         layout.addWidget(header)
         
         # Time format group
@@ -186,7 +202,6 @@ class DateTimeConfigDialog(QDialog):
             "July 23, 2025 (%B %d, %Y)",
             "Wed, 23 Jul (%a, %d %b)"
         ])
-        # Set current based on saved format
         date_formats = ["%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d %B %Y", "%B %d, %Y", "%a, %d %b"]
         current_format = self.config["datetime"]["date_format"]
         if current_format in date_formats:
@@ -219,13 +234,11 @@ class DateTimeConfigDialog(QDialog):
         appearance_group = QGroupBox("Appearance")
         appearance_layout = QFormLayout(appearance_group)
         
-        # Font button
         self.font_btn = QPushButton("Choose Font")
         self.font_btn.clicked.connect(self._choose_font)
         self._update_font_button()
         appearance_layout.addRow("Font:", self.font_btn)
         
-        # Color button
         self.color_btn = QPushButton("Choose Color")
         self.color_btn.clicked.connect(self._choose_color)
         self._update_color_button()
@@ -301,7 +314,7 @@ class DateTimeConfigDialog(QDialog):
         self.color_btn.setStyleSheet(f"""
             background-color: {color};
             color: {'#ffffff' if QColor(color).lightness() < 128 else '#000000'};
-            border: 1px solid #cccccc;
+            border: 1px solid #555555;
             padding: 5px 10px;
             min-width: 100px;
         """)
@@ -309,7 +322,6 @@ class DateTimeConfigDialog(QDialog):
     
     def update_preview(self):
         """Update the preview label"""
-        # Build format string
         format_parts = []
         
         if self.show_date_check.isChecked():
@@ -318,9 +330,9 @@ class DateTimeConfigDialog(QDialog):
             format_parts.append(date_format)
         
         if self.show_time_check.isChecked():
-            if self.time_format_combo.currentIndex() == 0:  # 24h
+            if self.time_format_combo.currentIndex() == 0:
                 time_format = "%H:%M"
-            else:  # 12h
+            else:
                 time_format = "%I:%M %p"
             
             if self.show_seconds_check.isChecked():
@@ -333,22 +345,17 @@ class DateTimeConfigDialog(QDialog):
             return
         
         full_format = " ".join(format_parts)
-        
-        # Get current time
         now = datetime.now()
         
-        # Apply timezone
-        if self.timezone_combo.currentIndex() == 1:  # UTC
+        if self.timezone_combo.currentIndex() == 1:
             from datetime import timezone
             now = now.astimezone(timezone.utc)
         
-        # Format time
         try:
             preview_text = now.strftime(full_format)
         except:
             preview_text = "Invalid format"
         
-        # Apply styling
         color = self.config["datetime"]["color"]
         font_family = self.config["datetime"]["font_family"]
         font_size = self.config["datetime"]["font_size"]
@@ -367,7 +374,6 @@ class DateTimeConfigDialog(QDialog):
     
     def save_and_close(self):
         """Save configuration and close"""
-        # Update config from UI
         self.config["datetime"]["show_time"] = self.show_time_check.isChecked()
         self.config["datetime"]["time_format"] = "12h" if self.time_format_combo.currentIndex() == 1 else "24h"
         self.config["datetime"]["show_seconds"] = self.show_seconds_check.isChecked()

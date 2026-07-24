@@ -1,32 +1,30 @@
-# Plan: Convert Gadget Button to Configuration Dropdown
-## ID: 1784846869.1291027
-## Created: 2026-07-23 23:47:49
+# Plan: Apply Dark Theme to All Configuration Dialogs
+## ID: 1784895470.0664911
+## Created: 2026-07-24 13:17:50
 ## Status: in_progress
 
 ### Goal:
-Replace the single gadget button (⚙) with a dropdown menu that provides access to:
-1. Gadget management (existing config dialog)
-2. Panel configuration (colors, backgrounds, styling)
-3. Auto-generative menu management
-4. Date/time configuration
-
-This consolidates all configuration options into one accessible location.
+Review and update all configuration dialogs to use a consistent dark theme:
+- Dark background (#1a1a1a or #2d2d2d)
+- White/light text (#ffffff or #eeeeee)
+- Consistent styling across all dialogs
+- Update: Panel Config, Menu Config, DateTime Config, Gadget Config, and menu leaf windows
 
 ### Tasks (5):
-1. [pending] Create Panel Configuration Module
-   ID: 1784846872.8153505
+1. [pending] Update Panel Config Dialog to Dark Theme
+   ID: 1784895473.8489826
 
-2. [pending] Create Menu Management Dialog
-   ID: 1784846876.7066116
+2. [pending] Update Menu Config Dialog to Dark Theme
+   ID: 1784895477.6439128
 
-3. [pending] Create Date/Time Configuration Dialog
-   ID: 1784846880.4878962
+3. [pending] Update DateTime Config Dialog to Dark Theme
+   ID: 1784895508.0613165
 
-4. [pending] Update Panel to Use Configuration Dropdown
-   ID: 1784846884.079759
+4. [pending] Update Gadget Config Dialog to Dark Theme
+   ID: 1784895511.9483228
 
-5. [pending] Test Configuration Dropdown Integration
-   ID: 1784846888.1760604
+5. [pending] Update Menu Leaf Windows to Dark Theme
+   ID: 1784895516.0443602
 
 ---
 
