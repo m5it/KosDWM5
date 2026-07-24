@@ -1,30 +1,34 @@
-# Plan: Apply Dark Theme to All Configuration Dialogs
-## ID: 1784895470.0664911
-## Created: 2026-07-24 13:17:50
+# Plan: Improve Notices Gadget with Rich Text Editor and Fix Click Behavior
+## ID: 1784896351.5550754
+## Created: 2026-07-24 13:32:31
 ## Status: in_progress
 
 ### Goal:
-Review and update all configuration dialogs to use a consistent dark theme:
-- Dark background (#1a1a1a or #2d2d2d)
-- White/light text (#ffffff or #eeeeee)
-- Consistent styling across all dialogs
-- Update: Panel Config, Menu Config, DateTime Config, Gadget Config, and menu leaf windows
+Fix and enhance the Notices Gadget:
+1. Fix notice disappearing/hiding when clicked - investigate click behavior and ensure notices stay visible
+2. Add double-click to edit notices (open editor dialog)
+3. Replace simple text input with rich text editor supporting: bold, italic, underline, font size, color
+4. Ensure notices are properly saved and loaded with rich text content
+5. Fix any other noticed issues with the notices system
 
-### Tasks (5):
-1. [pending] Update Panel Config Dialog to Dark Theme
-   ID: 1784895473.8489826
+### Tasks (6):
+1. [pending] Fix Notice Click Behavior - Prevent Disappearing
+   ID: 1784896356.0510716
 
-2. [pending] Update Menu Config Dialog to Dark Theme
-   ID: 1784895477.6439128
+2. [pending] Add Double-Click to Edit Notices
+   ID: 1784896360.1481884
 
-3. [pending] Update DateTime Config Dialog to Dark Theme
-   ID: 1784895508.0613165
+3. [pending] Create Rich Text Editor for Notice Content
+   ID: 1784896365.0040858
 
-4. [pending] Update Gadget Config Dialog to Dark Theme
-   ID: 1784895511.9483228
+4. [pending] Update NoticesStore to Handle Rich Text
+   ID: 1784896368.7485495
 
-5. [pending] Update Menu Leaf Windows to Dark Theme
-   ID: 1784895516.0443602
+5. [pending] Test Complete Notices Flow
+   ID: 1784896372.8446114
+
+6. [pending] Apply Dark Theme to Notices Dialogs
+   ID: 1784896376.7362611
 
 ---
 

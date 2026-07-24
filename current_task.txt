@@ -1,4 +1,4 @@
-Plan: Apply Dark Theme to All Configuration Dialogs
-Progress: 5/5 completed (0 blocked)
+Plan: Improve Notices Gadget with Rich Text Editor and Fix Click Behavior
+Progress: 6/6 completed (0 blocked)
 No task in progress.
-Updated: 2026-07-24 13:24:44
+Updated: 2026-07-24 13:39:10

@@ -6,15 +6,37 @@ Notices Gadget for KosDWM PyQt5
 import json
 import uuid
 import sys
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from PyQt5.QtWidgets import QMessageBox, QInputDialog, QDialog, QVBoxLayout, QListWidget, QPushButton, QApplication
-from PyQt5.QtCore import QTimer
+from PyQt5.QtWidgets import (
+    QMessageBox, QInputDialog, QDialog, QVBoxLayout, QListWidget, 
+    QPushButton, QApplication, QLabel, QHBoxLayout, QFormLayout,
+    QLineEdit, QTextEdit, QComboBox, QDateTimeEdit, QToolBar,
+    QColorDialog, QFontComboBox, QSpinBox
+)
+from PyQt5.QtCore import QTimer, Qt
+from PyQt5.QtGui import QTextCharFormat, QFont, QColor
 
 # Import GadgetBase - add parent dir to path first
 sys.path.insert(0, str(Path(__file__).parent))
 from gadgets_pyqt5 import GadgetBase
+
+
+def strip_html(html):
+    """Strip HTML tags from text for plain text display"""
+    if not html:
+        return ""
+    # Remove HTML tags
+    text = re.sub(r'<[^>]+>', '', html)
+    # Replace HTML entities
+    text = text.replace('&nbsp;', ' ')
+    text = text.replace('&lt;', '<')
+    text = text.replace('&gt;', '>')
+    text = text.replace('&amp;', '&')
+    text = text.replace('&quot;', '"')
+    return text
 
 
 class Notice:
@@ -51,6 +73,250 @@ class Notice:
             notice.due_date = datetime.fromisoformat(data["due_date"])
         
         return notice
+
+
+class RichTextEditorDialog(QDialog):
+    """Dialog with rich text editor for notice content"""
+    
+    def __init__(self, parent=None, title="", content="", priority="medium", due_date=None):
+        super().__init__(parent)
+        self.setWindowTitle("Add/Edit Notice" if not title else f"Edit: {title}")
+        self.setGeometry(100, 100, 600, 500)
+        
+        # Store initial values
+        self.initial_title = title
+        self.initial_content = content
+        self.initial_priority = priority
+        self.initial_due_date = due_date
+        
+        self._setup_ui()
+        self._apply_styles()
+    
+    def _setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setSpacing(10)
+        layout.setContentsMargins(15, 15, 15, 15)
+        
+        # Title input
+        title_layout = QHBoxLayout()
+        title_layout.addWidget(QLabel("Title:"))
+        self.title_edit = QLineEdit(self.initial_title)
+        title_layout.addWidget(self.title_edit)
+        layout.addLayout(title_layout)
+        
+        # Toolbar for formatting
+        toolbar = QHBoxLayout()
+        
+        # Bold button
+        self.bold_btn = QPushButton("B")
+        self.bold_btn.setCheckable(True)
+        self.bold_btn.setToolTip("Bold")
+        self.bold_btn.setFixedWidth(30)
+        self.bold_btn.setStyleSheet("font-weight: bold;")
+        self.bold_btn.clicked.connect(self._toggle_bold)
+        toolbar.addWidget(self.bold_btn)
+        
+        # Italic button
+        self.italic_btn = QPushButton("I")
+        self.italic_btn.setCheckable(True)
+        self.italic_btn.setToolTip("Italic")
+        self.italic_btn.setFixedWidth(30)
+        self.italic_btn.setStyleSheet("font-style: italic;")
+        self.italic_btn.clicked.connect(self._toggle_italic)
+        toolbar.addWidget(self.italic_btn)
+        
+        # Underline button
+        self.underline_btn = QPushButton("U")
+        self.underline_btn.setCheckable(True)
+        self.underline_btn.setToolTip("Underline")
+        self.underline_btn.setFixedWidth(30)
+        self.underline_btn.setStyleSheet("text-decoration: underline;")
+        self.underline_btn.clicked.connect(self._toggle_underline)
+        toolbar.addWidget(self.underline_btn)
+        
+        toolbar.addSpacing(10)
+        
+        # Font size
+        toolbar.addWidget(QLabel("Size:"))
+        self.size_spin = QSpinBox()
+        self.size_spin.setRange(8, 72)
+        self.size_spin.setValue(12)
+        self.size_spin.valueChanged.connect(self._change_font_size)
+        toolbar.addWidget(self.size_spin)
+        
+        toolbar.addSpacing(10)
+        
+        # Font family
+        toolbar.addWidget(QLabel("Font:"))
+        self.font_combo = QFontComboBox()
+        self.font_combo.currentFontChanged.connect(self._change_font)
+        toolbar.addWidget(self.font_combo)
+        
+        toolbar.addSpacing(10)
+        
+        # Color picker
+        self.color_btn = QPushButton("Color")
+        self.color_btn.setToolTip("Text Color")
+        self.color_btn.clicked.connect(self._change_color)
+        toolbar.addWidget(self.color_btn)
+        
+        toolbar.addStretch()
+        layout.addLayout(toolbar)
+        
+        # Rich text editor
+        self.editor = QTextEdit()
+        self.editor.setAcceptRichText(True)
+        self.editor.setHtml(self.initial_content)
+        self.editor.setMinimumHeight(200)
+        layout.addWidget(self.editor)
+        
+        # Priority and Due date row
+        options_layout = QHBoxLayout()
+        
+        options_layout.addWidget(QLabel("Priority:"))
+        self.priority_combo = QComboBox()
+        self.priority_combo.addItems(["low", "medium", "high"])
+        self.priority_combo.setCurrentText(self.initial_priority)
+        options_layout.addWidget(self.priority_combo)
+        
+        options_layout.addSpacing(20)
+        
+        options_layout.addWidget(QLabel("Due Date:"))
+        self.due_edit = QDateTimeEdit()
+        if self.initial_due_date:
+            self.due_edit.setDateTime(self.initial_due_date)
+        else:
+            self.due_edit.setDateTime(datetime.now())
+        self.due_edit.setCalendarPopup(True)
+        options_layout.addWidget(self.due_edit)
+        
+        options_layout.addStretch()
+        layout.addLayout(options_layout)
+        
+        # Buttons
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
+        
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.clicked.connect(self.reject)
+        btn_layout.addWidget(cancel_btn)
+        
+        save_btn = QPushButton("Save")
+        save_btn.setDefault(True)
+        save_btn.clicked.connect(self.accept)
+        btn_layout.addWidget(save_btn)
+        
+        layout.addLayout(btn_layout)
+        
+        # Connect cursor position change to update toolbar
+        self.editor.cursorPositionChanged.connect(self._update_toolbar)
+    
+    def _apply_styles(self):
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #1a1a1a;
+            }
+            QLabel {
+                color: #ffffff;
+                font-size: 12px;
+            }
+            QLineEdit {
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #444444;
+                border-radius: 3px;
+                padding: 5px;
+            }
+            QTextEdit {
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #444444;
+                border-radius: 3px;
+                padding: 5px;
+            }
+            QComboBox {
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #444444;
+                border-radius: 3px;
+                padding: 5px;
+            }
+            QDateTimeEdit {
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #444444;
+                border-radius: 3px;
+                padding: 5px;
+            }
+            QSpinBox {
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #444444;
+                border-radius: 3px;
+                padding: 5px;
+            }
+            QFontComboBox {
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #444444;
+                border-radius: 3px;
+                padding: 5px;
+            }
+            QPushButton {
+                background-color: #4a4a4a;
+                color: #ffffff;
+                border: 1px solid #555555;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #5a5a5a;
+            }
+            QPushButton:checked {
+                background-color: #4a90d9;
+            }
+        """)
+    
+    def _toggle_bold(self):
+        if self.bold_btn.isChecked():
+            self.editor.setFontWeight(QFont.Bold)
+        else:
+            self.editor.setFontWeight(QFont.Normal)
+    
+    def _toggle_italic(self):
+        self.editor.setFontItalic(self.italic_btn.isChecked())
+    
+    def _toggle_underline(self):
+        self.editor.setFontUnderline(self.underline_btn.isChecked())
+    
+    def _change_font_size(self, size):
+        self.editor.setFontPointSize(size)
+    
+    def _change_font(self, font):
+        self.editor.setFontFamily(font.family())
+    
+    def _change_color(self):
+        color = QColorDialog.getColor(self.editor.textColor(), self)
+        if color.isValid():
+            self.editor.setTextColor(color)
+    
+    def _update_toolbar(self):
+        """Update toolbar buttons based on current cursor format"""
+        fmt = self.editor.currentCharFormat()
+        self.bold_btn.setChecked(fmt.fontWeight() == QFont.Bold)
+        self.italic_btn.setChecked(fmt.fontItalic())
+        self.underline_btn.setChecked(fmt.fontUnderline())
+        self.size_spin.setValue(int(fmt.fontPointSize()) if fmt.fontPointSize() > 0 else 12)
+    
+    def get_data(self):
+        """Return the notice data"""
+        return {
+            "title": self.title_edit.text(),
+            "content": self.editor.toHtml(),
+            "priority": self.priority_combo.currentText(),
+            "due_date": self.due_edit.dateTime().toPyDateTime()
+        }
 
 
 class NoticesStore:
@@ -110,6 +376,7 @@ class NoticesGadget(GadgetBase):
         super().__init__()
         self.store = NoticesStore()
         self.active_count = len(self.store.get_active())
+        self.list_widget = None
         
         # Timer for periodic updates
         self.timer = QTimer()
@@ -141,39 +408,47 @@ class NoticesGadget(GadgetBase):
         # Get parent window properly
         parent = QApplication.activeWindow()
         
-        # Create dialog with proper parent and light background
+        # Create dialog with proper parent
         dialog = QDialog(parent)
         dialog.setWindowTitle("Notices")
-        dialog.setGeometry(100, 100, 400, 300)
+        dialog.setGeometry(100, 100, 500, 400)
         
-        # Light theme stylesheet
+        # Dark theme stylesheet (consistent with other dialogs)
         dialog.setStyleSheet("""
             QDialog {
-                background-color: #f5f5f5;
+                background-color: #1a1a1a;
+            }
+            QLabel {
+                color: #ffffff;
             }
             QListWidget {
-                background-color: white;
-                border: 1px solid #cccccc;
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #444444;
                 border-radius: 4px;
                 padding: 5px;
             }
             QListWidget::item {
-                padding: 5px;
-                border-bottom: 1px solid #eeeeee;
+                padding: 8px;
+                border-bottom: 1px solid #444444;
+            }
+            QListWidget::item:selected {
+                background-color: #4a90d9;
+                color: #ffffff;
+            }
+            QListWidget::item:hover {
+                background-color: #3d3d3d;
             }
             QPushButton {
-                background-color: #4a90d9;
-                color: white;
-                border: none;
+                background-color: #4a4a4a;
+                color: #ffffff;
+                border: 1px solid #555555;
                 padding: 8px 16px;
                 border-radius: 4px;
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #357abd;
-            }
-            QPushButton:pressed {
-                background-color: #2a6299;
+                background-color: #5a5a5a;
             }
         """)
         
@@ -181,33 +456,216 @@ class NoticesGadget(GadgetBase):
         layout.setSpacing(10)
         layout.setContentsMargins(15, 15, 15, 15)
         
+        # Header
+        header = QLabel("Your Notices")
+        header.setStyleSheet("font-size: 16px; font-weight: bold; color: #ffffff;")
+        layout.addWidget(header)
+        
         # List of notices
-        list_widget = QListWidget()
-        list_widget.setMinimumHeight(150)
-        for notice in self.store.get_active():
-            list_widget.addItem(f"{notice.title} ({notice.priority})")
-        layout.addWidget(list_widget)
+        self.list_widget = QListWidget()
+        self.list_widget.setMinimumHeight(200)
+        self._refresh_notices_list()
+        
+        # Connect click and double-click handlers
+        self.list_widget.itemClicked.connect(self._on_notice_clicked)
+        self.list_widget.itemDoubleClicked.connect(self._on_notice_double_clicked)
+        
+        layout.addWidget(self.list_widget)
+        
+        # Buttons row
+        btn_layout = QHBoxLayout()
         
         # Add button
         add_btn = QPushButton("Add Notice")
-        def add_notice():
-            text, ok = QInputDialog.getText(dialog, "New Notice", "Enter notice title:")
-            if ok and text:
-                notice = Notice(text, priority="medium")
-                self.store.add(notice)
-                list_widget.addItem(f"{notice.title} ({notice.priority})")
-        add_btn.clicked.connect(add_notice)
-        layout.addWidget(add_btn)
+        add_btn.clicked.connect(lambda: self._add_notice(dialog))
+        btn_layout.addWidget(add_btn)
+        
+        # Delete button
+        delete_btn = QPushButton("Delete")
+        delete_btn.clicked.connect(self._delete_selected_notice)
+        btn_layout.addWidget(delete_btn)
+        
+        btn_layout.addStretch()
         
         # Close button
         close_btn = QPushButton("Close")
         close_btn.clicked.connect(dialog.accept)
+        btn_layout.addWidget(close_btn)
+        
+        layout.addLayout(btn_layout)
+        
+        # Show dialog non-modally to prevent freezing
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
+    
+    def _refresh_notices_list(self):
+        """Refresh the notices list widget"""
+        if not self.list_widget:
+            return
+        self.list_widget.clear()
+        for notice in self.store.get_active():
+            # Strip HTML for list display
+            plain_content = strip_html(notice.content)
+            # Show title and preview of content
+            item_text = notice.title
+            if plain_content:
+                preview = plain_content[:40] + "..." if len(plain_content) > 40 else plain_content
+                item_text += f" - {preview}"
+            if notice.priority != "medium":
+                item_text += f" [{notice.priority}]"
+            item = self.list_widget.addItem(item_text)
+            # Store notice ID as user data
+            self.list_widget.item(self.list_widget.count() - 1).setData(Qt.UserRole, notice.id)
+    
+    def _on_notice_clicked(self, item):
+        """Handle single click on notice - show details with HTML rendering"""
+        notice_id = item.data(Qt.UserRole)
+        if not notice_id:
+            return
+        
+        notice = self._get_notice_by_id(notice_id)
+        if not notice:
+            return
+        
+        # Create detail dialog with HTML content display
+        parent = self.list_widget.window() if self.list_widget else None
+        detail_dialog = QDialog(parent)
+        detail_dialog.setWindowTitle(f"Notice: {notice.title}")
+        detail_dialog.setGeometry(100, 100, 400, 300)
+        detail_dialog.setStyleSheet("""
+            QDialog {
+                background-color: #1a1a1a;
+            }
+            QLabel {
+                color: #ffffff;
+                font-size: 14px;
+            }
+            QTextEdit {
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #444444;
+                border-radius: 4px;
+                padding: 10px;
+            }
+            QPushButton {
+                background-color: #4a4a4a;
+                color: #ffffff;
+                border: 1px solid #555555;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #5a5a5a;
+            }
+        """)
+        
+        layout = QVBoxLayout(detail_dialog)
+        layout.setSpacing(10)
+        layout.setContentsMargins(15, 15, 15, 15)
+        # Title
+        title_label = QLabel(f"<b>{notice.title}</b>")
+        title_label.setStyleSheet("font-size: 16px; color: #ffffff;")
+        layout.addWidget(title_label)
+        
+        # Due date and priority
+        due = notice.due_date.strftime("%Y-%m-%d %H:%M") if notice.due_date else "No due date"
+        info_label = QLabel(f"Due: {due} | Priority: {notice.priority}")
+        info_label.setStyleSheet("color: #aaaaaa; font-size: 12px;")
+        layout.addWidget(info_label)
+        # Content with HTML rendering
+        content_edit = QTextEdit()
+        content_edit.setReadOnly(True)
+        content_edit.setHtml(notice.content if notice.content else "<i>No content</i>")
+        layout.addWidget(content_edit)
+        
+        # Close button
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(detail_dialog.accept)
         layout.addWidget(close_btn)
         
-        # Show dialog
-        dialog.setModal(True)
-        result = dialog.exec_()
-        print(f"Notices dialog closed with result: {result}")
+        detail_dialog.exec_()
+    
+    def _on_notice_double_clicked(self, item):
+        """Handle double click on notice - edit"""
+        notice_id = item.data(Qt.UserRole)
+        if not notice_id:
+            return
+        
+        notice = self._get_notice_by_id(notice_id)
+        if not notice:
+            return
+        
+        # Open edit dialog with rich text editor
+        self._edit_notice(notice)
+        self._refresh_notices_list()
+    
+    def _get_notice_by_id(self, notice_id):
+        """Get notice by ID"""
+        for notice in self.store.notices:
+            if notice.id == notice_id:
+                return notice
+        return None
+    
+    def _add_notice(self, parent_dialog):
+        """Add a new notice using rich text editor"""
+        editor = RichTextEditorDialog(parent_dialog)
+        if editor.exec_() == QDialog.Accepted:
+            data = editor.get_data()
+            notice = Notice(
+                title=data["title"],
+                content=data["content"],
+                due_date=data["due_date"],
+                priority=data["priority"]
+            )
+            self.store.add(notice)
+            self._refresh_notices_list()
+            self.update_badge()
+    
+    def _delete_selected_notice(self):
+        """Delete the selected notice"""
+        if not self.list_widget:
+            return
+        
+        current_row = self.list_widget.currentRow()
+        if current_row < 0:
+            return
+        
+        item = self.list_widget.item(current_row)
+        notice_id = item.data(Qt.UserRole)
+        
+        if notice_id:
+            reply = QMessageBox.question(
+                self.list_widget.window(),
+                "Confirm Delete",
+                "Delete this notice?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            if reply == QMessageBox.Yes:
+                self.store.remove(notice_id)
+                self._refresh_notices_list()
+                self.update_badge()
+    
+    def _edit_notice(self, notice):
+        """Edit an existing notice with rich text editor"""
+        parent = self.list_widget.window() if self.list_widget else None
+        
+        editor = RichTextEditorDialog(
+            parent,
+            title=notice.title,
+            content=notice.content,
+            priority=notice.priority,
+            due_date=notice.due_date
+        )
+        
+        if editor.exec_() == QDialog.Accepted:
+            data = editor.get_data()
+            notice.title = data["title"]
+            notice.content = data["content"]
+            notice.priority = data["priority"]
+            notice.due_date = data["due_date"]
+            self.store.save()
     
     def update_badge(self):
         """Update the badge count"""

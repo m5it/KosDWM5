@@ -1,0 +1,62 @@
+{
+  "id": "1784896351.5550754",
+  "title": "Improve Notices Gadget with Rich Text Editor and Fix Click Behavior",
+  "instructions": "Fix and enhance the Notices Gadget:\n1. Fix notice disappearing/hiding when clicked - investigate click behavior and ensure notices stay visible\n2. Add double-click to edit notices (open editor dialog)\n3. Replace simple text input with rich text editor supporting: bold, italic, underline, font size, color\n4. Ensure notices are properly saved and loaded with rich text content\n5. Fix any other noticed issues with the notices system",
+  "startTimestamp": 1784896351.5550811,
+  "endTimestamp": 1784896750.7313454,
+  "tasks": {
+    "1784896356.0510716": {
+      "id": "1784896356.0510716",
+      "status": "completed",
+      "instruction": "Investigate and fix the issue where notices disappear or become hidden when clicked. Check:\n- The on_click method in NoticesGadget\n- How notices are displayed and managed in the dialog\n- Ensure notices persist after click\n- Check if there's a close/destroy call happening incorrectly\n- Add debug output if needed to trace the issue",
+      "startTimestamp": 1784896394.6172042,
+      "endTimestamp": 1784896479.957991,
+      "log": [
+        {
+          "timestamp": 1784896394.6181648,
+          "text": "Build started"
+        }
+      ]
+    },
+    "1784896360.1481884": {
+      "id": "1784896360.1481884",
+      "status": "completed",
+      "instruction": "Implement double-click functionality on notices to open an edit dialog:\n- Connect itemDoubleClicked signal in the notices dialog\n- Create edit dialog that pre-fills with existing notice data\n- Allow editing title, content, due date, and priority\n- Save changes back to the notice store\n- Update the display after editing",
+      "startTimestamp": 1784896479.9579933,
+      "endTimestamp": 1784896550.3763573,
+      "log": []
+    },
+    "1784896365.0040858": {
+      "id": "1784896365.0040858",
+      "status": "completed",
+      "instruction": "Create a rich text editor dialog for notice content with formatting options:\n- Use QTextEdit with setAcceptRichText(True)\n- Add toolbar with formatting buttons: Bold, Italic, Underline\n- Add font size selector (combo box with sizes 8-72)\n- Add text color picker\n- Add font family selector\n- Ensure HTML content is saved and loaded properly\n- Replace the simple QInputDialog with this rich editor",
+      "startTimestamp": 1784896550.376361,
+      "endTimestamp": 1784896623.3204908,
+      "log": []
+    },
+    "1784896368.7485495": {
+      "id": "1784896368.7485495",
+      "status": "completed",
+      "instruction": "Update the NoticesStore class to properly save and load rich text (HTML) content:\n- Ensure content field can store HTML strings\n- Verify JSON serialization handles HTML properly\n- Test that rich text survives save/load cycles\n- Update notice display to render HTML properly in the list",
+      "startTimestamp": 1784896623.320499,
+      "endTimestamp": 1784896678.6187265,
+      "log": []
+    },
+    "1784896372.8446114": {
+      "id": "1784896372.8446114",
+      "status": "completed",
+      "instruction": "Test the complete notices workflow:\n1. Add a notice with rich text formatting\n2. Verify it displays correctly in the list\n3. Double-click to edit and verify changes save\n4. Click once to ensure notice doesn't disappear\n5. Restart KosDWM and verify notices persist with formatting\n6. Test all formatting options work correctly",
+      "startTimestamp": 1784896678.6187303,
+      "endTimestamp": 1784896730.5362537,
+      "log": []
+    },
+    "1784896376.7362611": {
+      "id": "1784896376.7362611",
+      "status": "completed",
+      "instruction": "Update the Notices Gadget dialogs to use the dark theme consistently:\n- Notices list dialog: dark background, light text\n- Add/Edit notice dialog: dark theme\n- Rich text editor: dark background with light text\n- Ensure all buttons and inputs match the dark theme",
+      "startTimestamp": 1784896730.5362563,
+      "endTimestamp": 1784896750.7304373,
+      "log": []
+    }
+  }
+}
