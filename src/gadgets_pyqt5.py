@@ -29,25 +29,46 @@ class GadgetBase(ABC):
     def __init__(self):
         self._panel = None  # Reference to panel for updates
     
+class GadgetBase(ABC):
+    """
+    Abstract base class for all KosDWM gadgets
+    """
+    
+    def __init__(self):
+        self._panel = None  # Reference to panel for updates and API access
+    
     def set_panel(self, panel):
-        """Store reference to panel for refresh notifications"""
+        """Store reference to panel for refresh notifications and API access"""
         self._panel = panel
+    
+    @property
+    def api(self):
+        """Access the panel's HTTP API for registering endpoints"""
+        if self._panel and hasattr(self._panel, 'api'):
+            return self._panel.api
+        return None
+    
+    def register_endpoint(self, path, handler, methods=None):
+        """
+        Register an HTTP API endpoint for this gadget.
+        
+        Args:
+            path: URL path (e.g., "/api/mygadget/status")
+            handler: Callable that receives request data and returns response
+            methods: List of HTTP methods (default: ["GET", "POST"])
+        
+        Returns:
+            True if registration successful, False otherwise
+        """
+        if self.api:
+            return self.api.register(path, handler, methods)
+        print(f"[Gadget:{self.get_name()}] Cannot register endpoint - no API access")
+        return False
     
     def refresh_icon(self):
         """Notify panel that icon needs refresh"""
         if self._panel:
             self._panel.refresh_gadget_icon(self)
-    
-    @abstractmethod
-    def get_name(self):
-        """Return the unique name/identifier of the gadget."""
-        pass
-    
-    @abstractmethod
-    def get_icon(self):
-        """Return the text/icon to display on the gadget button."""
-        pass
-    
     @abstractmethod
     def on_click(self):
         """Handle click event on the gadget."""

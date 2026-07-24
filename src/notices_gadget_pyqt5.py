@@ -7,6 +7,7 @@ import json
 import uuid
 import sys
 import re
+import threading
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -321,56 +322,81 @@ class RichTextEditorDialog(QDialog):
 
 
 class NoticesStore:
-    """Manages notices storage"""
+    """Manages notices storage with thread-safe access"""
     
     def __init__(self):
         self.notices = []
         self.file_path = Path.home() / ".config" / "KosDWM" / "notices.json"
+        self._lock = threading.RLock()  # Thread-safe lock
         self.load()
     
     def load(self):
         """Load notices from file"""
-        if self.file_path.exists():
-            try:
-                with open(self.file_path) as f:
-                    data = json.load(f)
-                    if isinstance(data, list):
-                        self.notices = [Notice.from_dict(n) for n in data]
-            except Exception as e:
-                print(f"Error loading notices: {e}")
+        with self._lock:
+            if self.file_path.exists():
+                try:
+                    with open(self.file_path) as f:
+                        data = json.load(f)
+                        if isinstance(data, list):
+                            self.notices = [Notice.from_dict(n) for n in data]
+                except Exception as e:
+                    print(f"Error loading notices: {e}")
     
     def save(self):
         """Save notices to file"""
-        try:
-            self.file_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.file_path, 'w') as f:
-                json.dump([n.to_dict() for n in self.notices], f, indent=2)
-        except Exception as e:
-            print(f"Error saving notices: {e}")
+        with self._lock:
+            try:
+                self.file_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(self.file_path, 'w') as f:
+                    json.dump([n.to_dict() for n in self.notices], f, indent=2)
+            except Exception as e:
+                print(f"Error saving notices: {e}")
     
     def add(self, notice):
-        """Add a new notice"""
-        self.notices.append(notice)
-        self.save()
+        """Add a new notice (thread-safe)"""
+        with self._lock:
+            self.notices.append(notice)
+            self.save()
+            return notice.id
     
     def remove(self, notice_id):
-        """Remove a notice by ID"""
-        self.notices = [n for n in self.notices if n.id != notice_id]
-        self.save()
+        """Remove a notice by ID (thread-safe)"""
+        with self._lock:
+            original_len = len(self.notices)
+            self.notices = [n for n in self.notices if n.id != notice_id]
+            removed = len(self.notices) < original_len
+            if removed:
+                self.save()
+            return removed
+    
+    def get(self, notice_id):
+        """Get a notice by ID (thread-safe)"""
+        with self._lock:
+            for n in self.notices:
+                if n.id == notice_id:
+                    return n
+            return None
+    
+    def get_all(self):
+        """Get all notices (thread-safe)"""
+        with self._lock:
+            return list(self.notices)
     
     def get_active(self):
-        """Get active (not completed) notices"""
-        return [n for n in self.notices if not n.completed]
+        """Get active (not completed) notices (thread-safe)"""
+        with self._lock:
+            return [n for n in self.notices if not n.completed]
     
     def get_overdue(self):
-        """Get overdue notices"""
-        now = datetime.now()
-        return [n for n in self.notices if n.due_date and n.due_date < now and not n.completed]
+        """Get overdue notices (thread-safe)"""
+        with self._lock:
+            now = datetime.now()
+            return [n for n in self.notices if n.due_date and n.due_date < now and not n.completed]
 
 
 class NoticesGadget(GadgetBase):
     """
-    Notices gadget for managing reminders
+    Notices gadget for managing reminders with HTTP API endpoints
     """
     
     def __init__(self):
@@ -383,6 +409,109 @@ class NoticesGadget(GadgetBase):
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_badge)
         self.timer.start(60000)  # Update every minute
+    
+    def set_panel(self, panel):
+        """Store panel reference and register HTTP API endpoints"""
+        super().set_panel(panel)
+        
+        # Register HTTP endpoints when panel is set
+        if self.api:
+            self._register_api_endpoints()
+    
+    def _register_api_endpoints(self):
+        """Register HTTP API endpoints for notices (RESTful pattern)"""
+        # GET /api/notices - list all notices
+        # POST /api/notices - create new notice
+        self.register_endpoint("/api/notices", self._api_handle_notices, methods=["GET", "POST"])
+        
+        # POST /api/notices/delete - delete notice (using POST for simplicity)
+        self.register_endpoint("/api/notices/delete", self._api_delete_notice, methods=["POST"])
+        
+        print("[NoticesGadget] HTTP API endpoints registered")
+    
+    def _api_handle_notices(self, request_data):
+        """API handler: GET /api/notices (list) or POST /api/notices (create)"""
+        method = request_data.get('method', 'GET')
+        
+        if method == 'GET':
+            return self._api_list_notices(request_data)
+        elif method == 'POST':
+            return self._api_create_notice(request_data)
+        else:
+            return {"error": f"Method {method} not supported", "status": "error"}
+    
+    def _api_list_notices(self, request_data):
+        """API handler: GET /api/notices - list all notices"""
+        notices = self.store.get_all()
+        return {
+            "notices": [n.to_dict() for n in notices],
+            "count": len(notices),
+            "active": len(self.store.get_active()),
+            "overdue": len(self.store.get_overdue())
+        }
+    
+    def _api_create_notice(self, request_data):
+        """API handler: POST /api/notices - create new notice"""
+        body = request_data.get('body', {})
+        
+        # Validate required fields
+        title = body.get('title', '').strip()
+        if not title:
+            return {"error": "Title is required", "status": "error"}
+        
+        # Create notice from request data
+        content = body.get('content', '')
+        priority = body.get('priority', 'medium')
+        
+        # Parse due_date if provided
+        due_date = None
+        if body.get('due_date'):
+            try:
+                due_date = datetime.fromisoformat(body['due_date'])
+            except ValueError:
+                return {"error": "Invalid due_date format. Use ISO format", "status": "error"}
+        
+        # Create and add notice
+        notice = Notice(title=title, content=content, due_date=due_date, priority=priority)
+        notice_id = self.store.add(notice)
+        
+        # Update badge
+        self.update_badge()
+        
+        return {
+            "status": "success",
+            "notice": notice.to_dict(),
+            "message": f"Notice '{title}' created successfully"
+        }
+    
+    def _api_delete_notice(self, request_data):
+        """API handler: POST /api/notices/delete - delete notice by ID"""
+        body = request_data.get('body', {})
+        
+        # Get notice ID from body
+        notice_id = body.get('id')
+        if not notice_id:
+            # Try query params
+            query = request_data.get('query', {})
+            notice_id = query.get('id', [None])[0]
+        
+        if not notice_id:
+            return {"error": "Notice ID is required", "status": "error"}
+        
+        # Try to remove
+        removed = self.store.remove(notice_id)
+        
+        if removed:
+            self.update_badge()
+            return {
+                "status": "success",
+                "message": f"Notice {notice_id} deleted"
+            }
+        else:
+            return {
+                "status": "error",
+                "error": f"Notice {notice_id} not found"
+            }
     
     def get_name(self):
         return "notices"
@@ -547,10 +676,7 @@ class NoticesGadget(GadgetBase):
     
     def _get_notice_by_id(self, notice_id):
         """Get notice by ID"""
-        for notice in self.store.notices:
-            if notice.id == notice_id:
-                return notice
-        return None
+        return self.store.get(notice_id)
     
     def _add_notice(self):
         """Add a new notice using rich text editor"""

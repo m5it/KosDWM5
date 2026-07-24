@@ -1,14 +1,4 @@
 Plan: Add About Window and HTTP Panel API for Gadgets
-Progress: 0/5 completed (0 blocked)
---- Current Task ---
-ID: 1784901551.9890764
-Title: Add About Window to Dropdown Menu
-Instruction: Add an About window to the right-side configuration dropdown:
-- Add "About KosDWM" option at the bottom of the dropdown menu
-- Create About dialog showing:
-  - KosDWM version (from AUTOVERSION)
-  - Credits (Created by B.K., OpenCode, etc.)
-  - System info (Python version, Qt version, etc.)
-- Use dark theme consistent with other dialogs
-Status: in_progress
-Updated: 2026-07-24 14:59:37
+Progress: 5/5 completed (0 blocked)
+No task in progress.
+Updated: 2026-07-24 18:53:05

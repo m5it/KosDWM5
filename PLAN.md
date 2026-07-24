@@ -1,7 +1,7 @@
 # Plan: Add About Window and HTTP Panel API for Gadgets
 ## ID: 1784901546.4543912
 ## Created: 2026-07-24 14:59:06
-## Status: in_progress
+## Status: completed
 
 ### Goal:
 Create two new features:
@@ -18,19 +18,24 @@ Create two new features:
 Design the API so gadgets can easily expose HTTP endpoints without managing their own servers.
 
 ### Tasks (5):
-1. [pending] Add About Window to Dropdown Menu
+1. [completed] Add an About window to the right-side configuration dropdown
    ID: 1784901551.9890764
+   Progress logs: 1 entries
 
-2. [pending] Create HTTP Panel API Service
+2. [completed] Create a centralized HTTP API service in the panel:
+- Panel 
    ID: 1784901558.0810134
 
-3. [pending] Create Gadget API Registration Interface
+3. [completed] Allow gadgets to register HTTP endpoints with the panel:
+- G
    ID: 1784901563.0429819
 
-4. [pending] Update Notices Gadget to Use Panel API
+4. [completed] Refactor NoticesGadget to use the shared Panel HTTP API:
+- R
    ID: 1784901567.3446538
 
-5. [pending] Test and Document HTTP Panel API
+5. [completed] Test the complete HTTP Panel API:
+- Test About window displa
    ID: 1784901572.2596061
 
 ---
