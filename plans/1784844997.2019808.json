@@ -3,7 +3,7 @@
   "title": "Fix Menu System to Match Original Behavior",
   "instructions": "Restore the auto-generative menu system to function exactly as it did before. The menus should:\n1. Auto-generate from directory structure in ~/.config/KosDWM/Menus/\n2. Support Python scripts that run commands (like lsof in background)\n3. Support leaf menus with config.json that open content windows\n4. Preserve all original functionality including script execution",
   "startTimestamp": 1784844997.201987,
-  "endTimestamp": null,
+  "endTimestamp": 1784846748.4276793,
   "tasks": {
     "1784844999.8897955": {
       "id": "1784844999.8897955",

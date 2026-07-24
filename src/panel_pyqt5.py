@@ -140,12 +140,17 @@ class Panel(QFrame):
         self.time_label.setFont(QFont("Arial", 10, QFont.Bold))
         layout.addWidget(self.time_label)
         
-        # Config button
-        self.config_button = QPushButton("⚙")
-        self.config_button.setFixedWidth(30)
-        self.config_button.setFixedHeight(22)
-        self.config_button.clicked.connect(self.open_config)
-        layout.addWidget(self.config_button)
+        # Config dropdown
+        self.config_combo = QComboBox()
+        self.config_combo.setPlaceholderText("⚙ Config")
+        self.config_combo.addItem("Manage Gadgets")
+        self.config_combo.addItem("Panel Settings")
+        self.config_combo.addItem("Menu Settings")
+        self.config_combo.addItem("Date/Time Settings")
+        self.config_combo.setFixedWidth(120)
+        self.config_combo.setFixedHeight(22)
+        self.config_combo.currentIndexChanged.connect(self.on_config_selected)
+        layout.addWidget(self.config_combo)
         
         # Load gadgets
         self.load_gadgets()
@@ -360,7 +365,6 @@ class Panel(QFrame):
                 margin: 5px 0px;
             }
         """)
-        
         # Load dynamic menus from directory structure
         for menu_data in self.menu_manager.load_menus():
             if menu_data.get("type") == "branch":
@@ -373,10 +377,51 @@ class Panel(QFrame):
         
         return menu
     
-    def open_config(self):
+    def on_config_selected(self, index):
+        """Handle configuration dropdown selection"""
+        if index < 0:
+            return
+        
+        # Reset dropdown immediately
+        self.config_combo.setCurrentIndex(-1)
+        # Reset dropdown immediately
+        self.config_combo.setCurrentIndex(-1)
+        
+        # Open appropriate dialog
+        if index == 0:
+            self.open_gadget_config()
+        elif index == 1:
+            self.open_panel_config()
+        elif index == 2:
+            self.open_menu_config()
+        elif index == 3:
+            self.open_datetime_config()
+    
+    def open_gadget_config(self):
         """Open gadget configuration"""
         from src.gadget_config_pyqt5 import GadgetConfigDialog
         
         dialog = GadgetConfigDialog(self.gadget_manager, self)
         if dialog.exec_():
             self.load_gadgets()
+    
+    def open_panel_config(self):
+        """Open panel configuration"""
+        from src.panel_config_pyqt5 import PanelConfigDialog
+        
+        dialog = PanelConfigDialog(self)
+        dialog.exec_()
+    
+    def open_menu_config(self):
+        """Open menu configuration"""
+        from src.menu_config_pyqt5 import MenuConfigDialog
+        
+        dialog = MenuConfigDialog(self)
+        dialog.exec_()
+    
+    def open_datetime_config(self):
+        """Open date/time configuration"""
+        from src.datetime_config_pyqt5 import DateTimeConfigDialog
+        
+        dialog = DateTimeConfigDialog(self)
+        dialog.exec_()

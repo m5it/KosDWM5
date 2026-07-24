@@ -1,30 +1,32 @@
-# Plan: Fix Menu System to Match Original Behavior
-## ID: 1784844997.2019808
-## Created: 2026-07-23 23:16:37
+# Plan: Convert Gadget Button to Configuration Dropdown
+## ID: 1784846869.1291027
+## Created: 2026-07-23 23:47:49
 ## Status: in_progress
 
 ### Goal:
-Restore the auto-generative menu system to function exactly as it did before. The menus should:
-1. Auto-generate from directory structure in ~/.config/KosDWM/Menus/
-2. Support Python scripts that run commands (like lsof in background)
-3. Support leaf menus with config.json that open content windows
-4. Preserve all original functionality including script execution
+Replace the single gadget button (⚙) with a dropdown menu that provides access to:
+1. Gadget management (existing config dialog)
+2. Panel configuration (colors, backgrounds, styling)
+3. Auto-generative menu management
+4. Date/time configuration
+
+This consolidates all configuration options into one accessible location.
 
 ### Tasks (5):
-1. [pending] Analyze Existing Menu Structure
-   ID: 1784844999.8897955
+1. [pending] Create Panel Configuration Module
+   ID: 1784846872.8153505
 
-2. [pending] Restore Menu Scanning from Directories
-   ID: 1784845002.7527075
+2. [pending] Create Menu Management Dialog
+   ID: 1784846876.7066116
 
-3. [pending] Fix Script Execution for Python Files
-   ID: 1784845005.624539
+3. [pending] Create Date/Time Configuration Dialog
+   ID: 1784846880.4878962
 
-4. [pending] Fix Leaf Menu Content Display
-   ID: 1784845008.2822905
+4. [pending] Update Panel to Use Configuration Dropdown
+   ID: 1784846884.079759
 
-5. [pending] Test Complete Menu Functionality
-   ID: 1784845011.3546872
+5. [pending] Test Configuration Dropdown Integration
+   ID: 1784846888.1760604
 
 ---
 

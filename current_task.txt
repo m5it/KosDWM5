@@ -1,13 +1,4 @@
-Plan: Fix Menu System to Match Original Behavior
-Progress: 2/5 completed (0 blocked)
---- Current Task ---
-ID: 1784845005.624539
-Title: Fix Script Execution for Python Files
-Instruction: Ensure Python scripts in menu folders execute properly:
-- Scripts like ok.py should run when clicked
-- Scripts should run commands (lsof, etc.) in background
-- Use subprocess.Popen with proper arguments
-- Handle script output/errors gracefully
-- Scripts should not block the UI
-Status: in_progress
-Updated: 2026-07-23 23:22:15
+Plan: Convert Gadget Button to Configuration Dropdown
+Progress: 5/5 completed (0 blocked)
+No task in progress.
+Updated: 2026-07-23 23:53:40
