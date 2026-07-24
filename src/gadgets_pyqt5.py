@@ -27,14 +27,6 @@ class GadgetBase(ABC):
     """
     
     def __init__(self):
-        self._panel = None  # Reference to panel for updates
-    
-class GadgetBase(ABC):
-    """
-    Abstract base class for all KosDWM gadgets
-    """
-    
-    def __init__(self):
         self._panel = None  # Reference to panel for updates and API access
     
     def set_panel(self, panel):
@@ -69,6 +61,17 @@ class GadgetBase(ABC):
         """Notify panel that icon needs refresh"""
         if self._panel:
             self._panel.refresh_gadget_icon(self)
+    
+    @abstractmethod
+    def get_name(self):
+        """Return the unique name/identifier of the gadget."""
+        pass
+    
+    @abstractmethod
+    def get_icon(self):
+        """Return the text/icon to display on the gadget button."""
+        pass
+    
     @abstractmethod
     def on_click(self):
         """Handle click event on the gadget."""
@@ -237,6 +240,14 @@ class GadgetManager:
         except Exception as e:
             print(f"Error saving gadget config: {e}")
     
+    def reload_gadgets(self):
+        """Reload gadgets from disk - reinitialize all gadget instances"""
+        self.gadgets.clear()
+        self._load_builtin_gadgets()
+        # Re-apply enabled list (may have changed)
+        self._load_config()
+        print("[GadgetManager] Gadgets reloaded")
+    
     def get_enabled_gadgets(self):
         """Get list of enabled gadgets"""
         return [self.gadgets[name] for name in self.enabled_gadgets 
@@ -258,6 +269,8 @@ class GadgetManager:
                 'source': 'built-in' if name in ['hello_world', 'test_gadget', 'notices'] else 'user'
             }
         return None
+    
+    def enable_gadget(self, name):
         """Enable a gadget"""
         if name in self.gadgets and name not in self.enabled_gadgets:
             self.enabled_gadgets.append(name)

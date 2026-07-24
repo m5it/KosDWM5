@@ -112,6 +112,7 @@ class GadgetConfigDialog(QDialog):
         
         # Get available gadgets
         available = self.gadget_manager.get_all_gadgets()
+        print(f"[GadgetConfig] Found {len(available)} gadgets")
         
         if not available:
             label = QLabel("No gadgets available")
@@ -119,8 +120,9 @@ class GadgetConfigDialog(QDialog):
             label.setStyleSheet("color: #888888; font-style: italic; padding: 50px;")
             container_layout.addWidget(label)
         else:
-            for gadget_name in available:
-                info = self.gadget_manager.get_gadget_info(gadget_name)
+            for gadget in available:
+                info = self.gadget_manager.get_gadget_info(gadget.get_name())
+                print(f"[GadgetConfig] Adding gadget: {gadget.get_name()} -> info={info is not None}")
                 if info:
                     self._create_gadget_item(container_layout, info)
         

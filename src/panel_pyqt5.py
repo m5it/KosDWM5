@@ -295,17 +295,36 @@ class Panel(QFrame):
             if item.widget():
                 item.widget().deleteLater()
         
-        # Create gadget manager
-        self.gadget_manager = GadgetManager()
+        # Create gadget manager and store as instance variable for config access
+        if not hasattr(self, 'gadget_manager') or self.gadget_manager is None:
+            self.gadget_manager = GadgetManager()
         
         # Store gadget->button mapping for refresh
         self._gadget_buttons = {}
         
+        # Debug: print how many gadgets we're loading
+        enabled = self.gadget_manager.get_enabled_gadgets()
+        print(f"[Panel] Loading {len(enabled)} gadgets")
+        
         # Add enabled gadgets - pass panel reference so gadgets can access API
-        for gadget in self.gadget_manager.get_enabled_gadgets():
+        for gadget in enabled:
+            print(f"[Panel] Adding gadget: {gadget.get_name()} with icon {gadget.get_icon()}")
             btn = QPushButton(gadget.get_icon())
             btn.setFixedSize(40, 22)
             btn.setToolTip(gadget.get_tooltip())
+            # Make button visible and styled
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #4a4a4a;
+                    color: white;
+                    border: none;
+                    padding: 2px 8px;
+                    font-size: 14px;
+                }
+                QPushButton:hover {
+                    background-color: #555555;
+                }
+            """)
             # Store gadget reference on button to avoid lambda capture issues
             btn._gadget = gadget
             btn.clicked.connect(self._on_gadget_clicked)
@@ -314,6 +333,11 @@ class Panel(QFrame):
             self._gadget_buttons[gadget.get_name()] = btn
             # Set panel reference on gadget for refresh notifications and API access
             gadget.set_panel(self)
+        
+        # Force layout update
+        self.gadgets_frame.update()
+        self.gadgets_frame.show()
+        print(f"[Panel] Gadgets loaded: {list(self._gadget_buttons.keys())}")
     
     def refresh_gadget_icon(self, gadget):
         """Refresh icon for a specific gadget"""

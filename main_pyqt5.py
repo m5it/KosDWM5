@@ -6,6 +6,7 @@ A simple window manager built with PyQt5
 
 import sys
 import os
+import argparse
 from pathlib import Path
 
 # Add src to path
@@ -16,6 +17,14 @@ from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont
 
 from src.panel_pyqt5 import Panel
+
+# Global debug flag
+DEBUG = False
+
+def debug_print(*args, **kwargs):
+    """Print only in debug mode"""
+    if DEBUG:
+        print("[DEBUG]", *args, **kwargs)
 
 
 class KosDWM(QWidget):
@@ -46,7 +55,7 @@ class KosDWM(QWidget):
         # Create panel
         self.create_panel()
         
-        print("KosDWM PyQt5 panel initialized")
+        debug_print("KosDWM PyQt5 panel initialized")
     
     def create_panel(self):
         """Create the top panel"""
@@ -56,10 +65,29 @@ class KosDWM(QWidget):
         
         self.panel = Panel(self)
         layout.addWidget(self.panel)
+        
+        # Debug: list loaded gadgets
+        if DEBUG and hasattr(self.panel, 'gadget_manager'):
+            debug_print("Loaded gadgets:")
+            for gadget in self.panel.gadget_manager.get_enabled_gadgets():
+                debug_print(f"  - {gadget.get_name()}: {gadget.get_icon()}")
 
 
 def main():
     """Main entry point"""
+    global DEBUG
+    
+    # Parse arguments
+    parser = argparse.ArgumentParser(description='KosDWM - PyQt5 Window Manager')
+    parser.add_argument('-d', '--debug', action='store_true', 
+                        help='Enable debug output')
+    args = parser.parse_args()
+    
+    DEBUG = args.debug
+    
+    if DEBUG:
+        print("[DEBUG] Debug mode enabled")
+    
     app = QApplication(sys.argv)
     
     # Set application font
