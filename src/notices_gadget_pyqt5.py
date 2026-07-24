@@ -12,9 +12,9 @@ from pathlib import Path
 
 from PyQt5.QtWidgets import (
     QMessageBox, QInputDialog, QDialog, QVBoxLayout, QListWidget, 
-    QPushButton, QApplication, QLabel, QHBoxLayout, QFormLayout,
-    QLineEdit, QTextEdit, QComboBox, QDateTimeEdit, QToolBar,
-    QColorDialog, QFontComboBox, QSpinBox
+    QListWidgetItem, QPushButton, QApplication, QLabel, QHBoxLayout, 
+    QFormLayout, QLineEdit, QTextEdit, QComboBox, QDateTimeEdit, 
+    QToolBar, QColorDialog, QFontComboBox, QSpinBox
 )
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QTextCharFormat, QFont, QColor
@@ -28,9 +28,7 @@ def strip_html(html):
     """Strip HTML tags from text for plain text display"""
     if not html:
         return ""
-    # Remove HTML tags
     text = re.sub(r'<[^>]+>', '', html)
-    # Replace HTML entities
     text = text.replace('&nbsp;', ' ')
     text = text.replace('&lt;', '<')
     text = text.replace('&gt;', '>')
@@ -68,10 +66,8 @@ class Notice:
         notice.id = data.get("id", str(uuid.uuid4()))
         notice.priority = data.get("priority", "medium")
         notice.completed = data.get("completed", False)
-        
         if data.get("due_date"):
             notice.due_date = datetime.fromisoformat(data["due_date"])
-        
         return notice
 
 
@@ -83,7 +79,6 @@ class RichTextEditorDialog(QDialog):
         self.setWindowTitle("Add/Edit Notice" if not title else f"Edit: {title}")
         self.setGeometry(100, 100, 600, 500)
         
-        # Store initial values
         self.initial_title = title
         self.initial_content = content
         self.initial_priority = priority
@@ -408,8 +403,9 @@ class NoticesGadget(GadgetBase):
         # Get parent window properly
         parent = QApplication.activeWindow()
         
-        # Create dialog with proper parent
-        dialog = QDialog(parent)
+        # Create dialog with proper parent - store as instance variable to prevent garbage collection
+        self.notices_dialog = QDialog(parent)
+        dialog = self.notices_dialog
         dialog.setWindowTitle("Notices")
         dialog.setGeometry(100, 100, 500, 400)
         
@@ -464,7 +460,6 @@ class NoticesGadget(GadgetBase):
         # List of notices
         self.list_widget = QListWidget()
         self.list_widget.setMinimumHeight(200)
-        self._refresh_notices_list()
         
         # Connect click and double-click handlers
         self.list_widget.itemClicked.connect(self._on_notice_clicked)
@@ -477,7 +472,7 @@ class NoticesGadget(GadgetBase):
         
         # Add button
         add_btn = QPushButton("Add Notice")
-        add_btn.clicked.connect(lambda: self._add_notice(dialog))
+        add_btn.clicked.connect(lambda: self._add_notice())
         btn_layout.addWidget(add_btn)
         
         # Delete button
@@ -494,6 +489,9 @@ class NoticesGadget(GadgetBase):
         
         layout.addLayout(btn_layout)
         
+        # Refresh the list AFTER all widgets are created
+        self._refresh_notices_list()
+        
         # Show dialog non-modally to prevent freezing
         dialog.show()
         dialog.raise_()
@@ -503,7 +501,9 @@ class NoticesGadget(GadgetBase):
         """Refresh the notices list widget"""
         if self.list_widget is None:
             return
+        
         self.list_widget.clear()
+        
         for notice in self.store.get_active():
             # Strip HTML for list display
             plain_content = strip_html(notice.content)
@@ -514,9 +514,11 @@ class NoticesGadget(GadgetBase):
                 item_text += f" - {preview}"
             if notice.priority != "medium":
                 item_text += f" [{notice.priority}]"
-            item = self.list_widget.addItem(item_text)
-            # Store notice ID as user data
-            self.list_widget.item(self.list_widget.count() - 1).setData(Qt.UserRole, notice.id)
+            
+            # Create item and set data properly
+            item = QListWidgetItem(item_text)
+            item.setData(Qt.UserRole, notice.id)
+            self.list_widget.addItem(item)
     
     def _on_notice_clicked(self, item):
         """Handle single click on notice - just select the item"""
@@ -525,7 +527,6 @@ class NoticesGadget(GadgetBase):
     
     def _on_notice_double_clicked(self, item):
         """Handle double click on notice - open full edit dialog"""
-        """Handle double click on notice - edit"""
         notice_id = item.data(Qt.UserRole)
         if not notice_id:
             return
@@ -545,9 +546,10 @@ class NoticesGadget(GadgetBase):
                 return notice
         return None
     
-    def _add_notice(self, parent_dialog):
+    def _add_notice(self):
         """Add a new notice using rich text editor"""
-        editor = RichTextEditorDialog(parent_dialog)
+        parent = self.notices_dialog if hasattr(self, 'notices_dialog') else None
+        editor = RichTextEditorDialog(parent)
         if editor.exec_() == QDialog.Accepted:
             data = editor.get_data()
             notice = Notice(
@@ -586,7 +588,7 @@ class NoticesGadget(GadgetBase):
     
     def _edit_notice(self, notice):
         """Edit an existing notice with rich text editor"""
-        parent = self.list_widget.window() if self.list_widget else None
+        parent = self.notices_dialog if hasattr(self, 'notices_dialog') else None
         
         editor = RichTextEditorDialog(
             parent,
@@ -603,7 +605,10 @@ class NoticesGadget(GadgetBase):
             notice.priority = data["priority"]
             notice.due_date = data["due_date"]
             self.store.save()
+            self._refresh_notices_list()
+            self.update_badge()
     
     def update_badge(self):
-        """Update the badge count"""
+        """Update the badge count and refresh panel icon"""
         self.active_count = len(self.store.get_active())
+        self.refresh_icon()
