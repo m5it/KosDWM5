@@ -501,7 +501,7 @@ class NoticesGadget(GadgetBase):
     
     def _refresh_notices_list(self):
         """Refresh the notices list widget"""
-        if not self.list_widget:
+        if self.list_widget is None:
             return
         self.list_widget.clear()
         for notice in self.store.get_active():
@@ -519,75 +519,12 @@ class NoticesGadget(GadgetBase):
             self.list_widget.item(self.list_widget.count() - 1).setData(Qt.UserRole, notice.id)
     
     def _on_notice_clicked(self, item):
-        """Handle single click on notice - show details with HTML rendering"""
-        notice_id = item.data(Qt.UserRole)
-        if not notice_id:
-            return
-        
-        notice = self._get_notice_by_id(notice_id)
-        if not notice:
-            return
-        
-        # Create detail dialog with HTML content display
-        parent = self.list_widget.window() if self.list_widget else None
-        detail_dialog = QDialog(parent)
-        detail_dialog.setWindowTitle(f"Notice: {notice.title}")
-        detail_dialog.setGeometry(100, 100, 400, 300)
-        detail_dialog.setStyleSheet("""
-            QDialog {
-                background-color: #1a1a1a;
-            }
-            QLabel {
-                color: #ffffff;
-                font-size: 14px;
-            }
-            QTextEdit {
-                background-color: #2d2d2d;
-                color: #ffffff;
-                border: 1px solid #444444;
-                border-radius: 4px;
-                padding: 10px;
-            }
-            QPushButton {
-                background-color: #4a4a4a;
-                color: #ffffff;
-                border: 1px solid #555555;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #5a5a5a;
-            }
-        """)
-        
-        layout = QVBoxLayout(detail_dialog)
-        layout.setSpacing(10)
-        layout.setContentsMargins(15, 15, 15, 15)
-        # Title
-        title_label = QLabel(f"<b>{notice.title}</b>")
-        title_label.setStyleSheet("font-size: 16px; color: #ffffff;")
-        layout.addWidget(title_label)
-        
-        # Due date and priority
-        due = notice.due_date.strftime("%Y-%m-%d %H:%M") if notice.due_date else "No due date"
-        info_label = QLabel(f"Due: {due} | Priority: {notice.priority}")
-        info_label.setStyleSheet("color: #aaaaaa; font-size: 12px;")
-        layout.addWidget(info_label)
-        # Content with HTML rendering
-        content_edit = QTextEdit()
-        content_edit.setReadOnly(True)
-        content_edit.setHtml(notice.content if notice.content else "<i>No content</i>")
-        layout.addWidget(content_edit)
-        
-        # Close button
-        close_btn = QPushButton("Close")
-        close_btn.clicked.connect(detail_dialog.accept)
-        layout.addWidget(close_btn)
-        
-        detail_dialog.exec_()
+        """Handle single click on notice - just select the item"""
+        # Selection happens automatically, no action needed
+        pass
     
     def _on_notice_double_clicked(self, item):
+        """Handle double click on notice - open full edit dialog"""
         """Handle double click on notice - edit"""
         notice_id = item.data(Qt.UserRole)
         if not notice_id:
@@ -625,7 +562,7 @@ class NoticesGadget(GadgetBase):
     
     def _delete_selected_notice(self):
         """Delete the selected notice"""
-        if not self.list_widget:
+        if self.list_widget is None:
             return
         
         current_row = self.list_widget.currentRow()

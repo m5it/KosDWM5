@@ -35,6 +35,10 @@
   - `.py` files = runnable scripts with `run()` function
   - `windowScript` = looping command output
 - **Gadget System**: Clickable icons in panel
+  - **Notices Gadget**: Rich text editor with formatting (bold, italic, underline, color, font, size)
+- **Dark Theme**: All dialogs use dark background with light text
+  - `windowScript` = looping command output
+- **Gadget System**: Clickable icons in panel
 - **Light Theme**: All dialogs use light background with blue buttons
 
 ## External Dependencies

@@ -1,4 +1,13 @@
-Plan: Improve Notices Gadget with Rich Text Editor and Fix Click Behavior
-Progress: 6/6 completed (0 blocked)
-No task in progress.
-Updated: 2026-07-24 13:39:10
+Plan: Notices Gadget UI Improvements
+Progress: 0/9 completed (0 blocked)
+--- Current Task ---
+ID: 1784898071.5605338
+Title: Debug QListWidget Visibility and Layout
+Instruction: The notices list appears empty. Check:
+- QListWidget minimum size is set correctly
+- QListWidget is actually added to the layout
+- Layout stretch factors allow list to expand
+- List widget is not hidden or has zero size
+- Check if items are being added but not visible due to styling
+Status: in_progress
+Updated: 2026-07-24 14:19:46

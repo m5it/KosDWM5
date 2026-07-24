@@ -26,6 +26,18 @@ class GadgetBase(ABC):
     Abstract base class for all KosDWM gadgets
     """
     
+    def __init__(self):
+        self._panel = None  # Reference to panel for updates
+    
+    def set_panel(self, panel):
+        """Store reference to panel for refresh notifications"""
+        self._panel = panel
+    
+    def refresh_icon(self):
+        """Notify panel that icon needs refresh"""
+        if self._panel:
+            self._panel.refresh_gadget_icon(self)
+    
     @abstractmethod
     def get_name(self):
         """Return the unique name/identifier of the gadget."""
@@ -56,6 +68,9 @@ class HelloWorldGadget(GadgetBase):
     Example gadget that displays a Hello World message when clicked
     """
     
+    def __init__(self):
+        super().__init__()
+    
     def get_name(self):
         return "hello_world"
     
@@ -76,15 +91,14 @@ class HelloWorldGadget(GadgetBase):
         msg_box = QMessageBox(QApplication.activeWindow())
         msg_box.setWindowTitle("Hello World")
         msg_box.setText(f"Hello from KosDWM v{KOSDWM_VERSION}!\n\nClick to continue.")
-        msg_box.setIcon(QMessageBox.Information)
         
-        # Light theme styling
+        # Apply dark theme styling
         msg_box.setStyleSheet("""
             QMessageBox {
-                background-color: #f5f5f5;
+                background-color: #2d2d2d;
             }
             QLabel {
-                color: #333333;
+                color: #ffffff;
                 font-size: 14px;
             }
             QPushButton {
@@ -94,10 +108,9 @@ class HelloWorldGadget(GadgetBase):
                 padding: 8px 16px;
                 border-radius: 4px;
                 font-weight: bold;
-                min-width: 80px;
             }
             QPushButton:hover {
-                background-color: #357abd;
+                background-color: #5aa0e9;
             }
         """)
         
@@ -106,42 +119,38 @@ class HelloWorldGadget(GadgetBase):
 
 class TestGadget(GadgetBase):
     """
-    Test gadget to verify the loading system works
+    Test gadget that displays a counter
     """
     
     def __init__(self):
-        self.test_value = 42
+        super().__init__()
+        self.counter = 0
     
     def get_name(self):
         return "test_gadget"
     
     def get_icon(self):
-        return "🧪"
+        self.counter += 1
+        return f"🧪{self.counter}"
     
     def get_tooltip(self):
-        return "Test gadget - click to verify loading works"
-    
-    def get_description(self):
-        return "A test gadget to verify the gadget loading system works correctly."
+        return f"Test gadget (clicked {self.counter} times)"
     
     def on_click(self):
-        """Show test message."""
+        """Increment counter and show message."""
         from PyQt5.QtWidgets import QMessageBox, QApplication
         
-        # Create styled message box
         msg_box = QMessageBox(QApplication.activeWindow())
         msg_box.setWindowTitle("Test Gadget")
-        msg_box.setText(f"Dynamic loading works!\nTest value: {self.test_value}\n\n"
-                       "If you see this message, the gadget system is functioning correctly.")
-        msg_box.setIcon(QMessageBox.Information)
+        msg_box.setText(f"Test gadget clicked!\nCount: {self.counter}")
         
-        # Light theme styling
+        # Apply dark theme styling
         msg_box.setStyleSheet("""
             QMessageBox {
-                background-color: #f5f5f5;
+                background-color: #2d2d2d;
             }
             QLabel {
-                color: #333333;
+                color: #ffffff;
                 font-size: 14px;
             }
             QPushButton {
@@ -151,10 +160,9 @@ class TestGadget(GadgetBase):
                 padding: 8px 16px;
                 border-radius: 4px;
                 font-weight: bold;
-                min-width: 80px;
             }
             QPushButton:hover {
-                background-color: #357abd;
+                background-color: #5aa0e9;
             }
         """)
         
@@ -163,210 +171,187 @@ class TestGadget(GadgetBase):
 
 class GadgetManager:
     """
-    Manages gadget registration, configuration, and instantiation.
+    Manages gadget loading and configuration
     """
     
     def __init__(self):
-        self._available_gadgets = {}
-        self._gadget_sources = {}
-        self._load_errors = []
-        self._enabled_gadgets = set()
-        self._config_path = Path.home() / ".config" / "KosDWM" / "gadgets.json"
-        self._gadgets_dir = Path.home() / ".config" / "KosDWM" / "gadgets"
-        
-        self._ensure_gadgets_dir()
-        self._register_builtin_gadgets()
-        self._discover_gadgets()
+        self.config_file = Path.home() / ".config" / "KosDWM" / "gadgets.json"
+        self.gadgets = {}
+        self._load_builtin_gadgets()
         self._load_config()
     
-    def _ensure_gadgets_dir(self):
-        """Create the gadgets directory if it doesn't exist."""
-        try:
-            self._gadgets_dir.mkdir(parents=True, exist_ok=True)
-        except IOError as e:
-            print(f"Error creating gadgets directory: {e}")
-    
-    def _register_builtin_gadgets(self):
-        """Register built-in gadgets."""
-        self.register_gadget(HelloWorldGadget, source="built-in")
-        self.register_gadget(TestGadget, source="built-in")
+    def _load_builtin_gadgets(self):
+        """Load built-in gadgets"""
+        self.gadgets["hello_world"] = HelloWorldGadget()
+        self.gadgets["test_gadget"] = TestGadget()
         
-        # Try to register notices gadget
+        # Try to load notices gadget
         try:
             from notices_gadget_pyqt5 import NoticesGadget
-            self.register_gadget(NoticesGadget, source="built-in")
-            print("NoticesGadget registered")
+            self.gadgets["notices"] = NoticesGadget()
         except ImportError as e:
-            print(f"NoticesGadget not available: {e}")
-    
-    def _discover_gadgets(self):
-        """Discover and load gadgets from the gadgets directory."""
-        self._load_errors.clear()
-        
-        if not self._gadgets_dir.exists():
-            return
-        
-        py_files = [f for f in self._gadgets_dir.iterdir()
-                    if f.is_file() and f.suffix == '.py' and not f.name.startswith('_')]
-        
-        for py_file in py_files:
-            self._load_gadget_module(py_file)
-    
-    def _load_gadget_module(self, file_path):
-        """Load a gadget module from a file path."""
-        try:
-            module_name = f"gadget_{file_path.stem}"
-            spec = importlib.util.spec_from_file_location(module_name, file_path)
-            if spec is None or spec.loader is None:
-                return
-            
-            module = importlib.util.module_from_spec(spec)
-            
-            # Add paths
-            project_root = Path(__file__).parent.parent
-            if str(project_root) not in sys.path:
-                sys.path.insert(0, str(project_root))
-            
-            if str(self._gadgets_dir) not in sys.path:
-                sys.path.insert(0, str(self._gadgets_dir))
-            
-            spec.loader.exec_module(module)
-            gadget_classes = self._find_gadget_classes(module)
-            
-            for gadget_class in gadget_classes:
-                try:
-                    self.register_gadget(gadget_class, source=str(file_path))
-                except ValueError:
-                    pass
-        
-        except Exception as e:
-            self._load_errors.append(f"Error loading {file_path.name}: {str(e)}")
-    
-    def _find_gadget_classes(self, module):
-        """Find all GadgetBase subclasses in a module."""
-        classes = []
-        for name, obj in inspect.getmembers(module, inspect.isclass):
-            if (issubclass(obj, GadgetBase) and
-                obj is not GadgetBase and
-                obj.__module__ == module.__name__):
-                classes.append(obj)
-        return classes
-    
-    def register_gadget(self, gadget_class, source="unknown"):
-        """Register a new gadget class."""
-        # Check if it's a gadget by looking for required methods
-        required_methods = ['get_name', 'get_icon', 'on_click', 'get_tooltip']
-        for method in required_methods:
-            if not hasattr(gadget_class, method):
-                raise ValueError(f"Gadget class missing required method: {method}")
-        
-        temp_instance = gadget_class()
-        name = temp_instance.get_name()
-        
-        self._available_gadgets[name] = gadget_class
-        self._gadget_sources[name] = source
-    
-    def get_gadget_source(self, gadget_name):
-        """Get the source of a gadget."""
-        return self._gadget_sources.get(gadget_name, "unknown")
-    
-    def get_load_errors(self):
-        """Get list of errors that occurred during gadget loading."""
-        return self._load_errors.copy()
-    
-    def reload_gadgets(self):
-        """Reload all gadgets from disk."""
-        built_ins = {name: cls for name, cls in self._available_gadgets.items()
-                     if self._gadget_sources.get(name) == "built-in"}
-        
-        self._available_gadgets = built_ins.copy()
-        self._gadget_sources = {name: src for name, src in self._gadget_sources.items()
-                               if src == "built-in"}
-        
-        self._load_errors.clear()
-        self._discover_gadgets()
-        
-        self._enabled_gadgets = {name for name in self._enabled_gadgets
-                                if name in self._available_gadgets}
-        self._save_config()
-    
-    def enable_gadget(self, gadget_name):
-        """Enable a gadget by name."""
-        if gadget_name in self._available_gadgets:
-            self._enabled_gadgets.add(gadget_name)
-            self._save_config()
-    
-    def disable_gadget(self, gadget_name):
-        """Disable a gadget by name."""
-        self._enabled_gadgets.discard(gadget_name)
-        self._save_config()
-    
-    def is_enabled(self, gadget_name):
-        """Check if a gadget is enabled."""
-        return gadget_name in self._enabled_gadgets
-    
-    def get_available_gadgets(self):
-        """Get list of all available gadget names."""
-        return list(self._available_gadgets.keys())
-    
-    def get_enabled_gadgets(self):
-        """Get instances of all enabled gadgets."""
-        gadgets = []
-        for name in self._enabled_gadgets:
-            if name in self._available_gadgets:
-                gadget_class = self._available_gadgets[name]
-                gadgets.append(gadget_class())
-        return gadgets
-    
-    def get_gadget_info(self, gadget_name):
-        """Get information about a gadget."""
-        if gadget_name not in self._available_gadgets:
-            return None
-        
-        gadget_class = self._available_gadgets[gadget_name]
-        instance = gadget_class()
-        source = self.get_gadget_source(gadget_name)
-        
-        if source == "built-in":
-            source_display = "built-in"
-            source_path = None
-        else:
-            source_display = "custom"
-            source_path = source
-        
-        return {
-            "name": instance.get_name(),
-            "icon": instance.get_icon(),
-            "tooltip": instance.get_tooltip(),
-            "description": instance.get_description(),
-            "enabled": self.is_enabled(gadget_name),
-            "source": source_display,
-            "source_path": source_path
-        }
+            print(f"Could not load notices gadget: {e}")
     
     def _load_config(self):
-        """Load gadget configuration from file."""
-        if not self._config_path.exists():
-            self._enabled_gadgets = {"hello_world", "test_gadget"}
+        """Load gadget configuration from file"""
+        if self.config_file.exists():
+            try:
+                with open(self.config_file) as f:
+                    config = json.load(f)
+                    self.enabled_gadgets = config.get("enabled", [])
+            except Exception as e:
+                print(f"Error loading gadget config: {e}")
+                self.enabled_gadgets = []
+        else:
+            # Default: enable all gadgets
+            self.enabled_gadgets = list(self.gadgets.keys())
             self._save_config()
-            return
-        
-        try:
-            with open(self._config_path, 'r') as f:
-                config = json.load(f)
-                self._enabled_gadgets = set(config.get("enabled", []))
-                # If empty, set defaults
-                if not self._enabled_gadgets:
-                    self._enabled_gadgets = {"hello_world", "test_gadget"}
-        except (json.JSONDecodeError, IOError):
-            self._enabled_gadgets = {"hello_world", "test_gadget"}
     
     def _save_config(self):
-        """Save gadget configuration to file."""
+        """Save gadget configuration to file"""
         try:
-            self._config_path.parent.mkdir(parents=True, exist_ok=True)
-            config = {"enabled": list(self._enabled_gadgets)}
-            with open(self._config_path, 'w') as f:
-                json.dump(config, f, indent=2)
-        except IOError:
-            pass
+            self.config_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.config_file, 'w') as f:
+                json.dump({"enabled": self.enabled_gadgets}, f, indent=2)
+        except Exception as e:
+            print(f"Error saving gadget config: {e}")
+    
+    def get_enabled_gadgets(self):
+        """Get list of enabled gadgets"""
+        return [self.gadgets[name] for name in self.enabled_gadgets 
+                if name in self.gadgets]
+    
+    def get_all_gadgets(self):
+        """Get all available gadgets"""
+        return list(self.gadgets.values())
+    
+    def enable_gadget(self, name):
+        """Enable a gadget"""
+        if name in self.gadgets and name not in self.enabled_gadgets:
+            self.enabled_gadgets.append(name)
+            self._save_config()
+    
+    def disable_gadget(self, name):
+        """Disable a gadget"""
+        if name in self.enabled_gadgets:
+            self.enabled_gadgets.remove(name)
+            self._save_config()
+    
+    def is_enabled(self, name):
+        """Check if a gadget is enabled"""
+        return name in self.enabled_gadgets
+
+
+def configure_gadgets(parent=None):
+    """Open gadget configuration dialog"""
+    from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
+                                  QCheckBox, QPushButton, QLabel, QScrollArea,
+                                  QWidget, QFrame)
+    
+    manager = GadgetManager()
+    
+    dialog = QDialog(parent)
+    dialog.setWindowTitle("Configure Gadgets")
+    dialog.setGeometry(100, 100, 400, 300)
+    
+    # Apply dark theme
+    dialog.setStyleSheet("""
+        QDialog {
+            background-color: #2d2d2d;
+        }
+        QLabel {
+            color: #ffffff;
+            font-size: 14px;
+        }
+        QCheckBox {
+            color: #ffffff;
+            font-size: 13px;
+            spacing: 8px;
+        }
+        QCheckBox::indicator {
+            width: 18px;
+            height: 18px;
+        }
+        QPushButton {
+            background-color: #4a90d9;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        QPushButton:hover {
+            background-color: #5aa0e9;
+        }
+        QScrollArea {
+            border: none;
+            background-color: #2d2d2d;
+        }
+    """)
+    
+    layout = QVBoxLayout(dialog)
+    
+    # Title
+    title = QLabel("Select gadgets to display:")
+    title.setStyleSheet("font-weight: bold; font-size: 16px; margin-bottom: 10px;")
+    layout.addWidget(title)
+    
+    # Scroll area for gadgets
+    scroll = QScrollArea()
+    scroll.setWidgetResizable(True)
+    scroll_content = QWidget()
+    scroll_layout = QVBoxLayout(scroll_content)
+    
+    checkboxes = {}
+    for gadget in manager.get_all_gadgets():
+        checkbox = QCheckBox(f"{gadget.get_icon()} {gadget.get_name()}")
+        checkbox.setChecked(manager.is_enabled(gadget.get_name()))
+        checkbox.setToolTip(gadget.get_description())
+        scroll_layout.addWidget(checkbox)
+        checkboxes[gadget.get_name()] = checkbox
+    
+    scroll_layout.addStretch()
+    scroll.setWidget(scroll_content)
+    layout.addWidget(scroll)
+    
+    # Buttons
+    btn_layout = QHBoxLayout()
+    
+    cancel_btn = QPushButton("Cancel")
+    cancel_btn.setStyleSheet("background-color: #666666;")
+    cancel_btn.clicked.connect(dialog.reject)
+    btn_layout.addWidget(cancel_btn)
+    
+    btn_layout.addStretch()
+    
+    save_btn = QPushButton("Save")
+    save_btn.clicked.connect(lambda: _save_gadget_config(dialog, manager, checkboxes))
+    btn_layout.addWidget(save_btn)
+    
+    layout.addLayout(btn_layout)
+    
+    dialog.exec_()
+
+
+def _save_gadget_config(dialog, manager, checkboxes):
+    """Save gadget configuration"""
+    for name, checkbox in checkboxes.items():
+        if checkbox.isChecked():
+            manager.enable_gadget(name)
+        else:
+            manager.disable_gadget(name)
+    dialog.accept()
+
+
+if __name__ == "__main__":
+    # Test the gadget system
+    from PyQt5.QtWidgets import QApplication
+    app = QApplication(sys.argv)
+    
+    manager = GadgetManager()
+    print("Available gadgets:")
+    for gadget in manager.get_all_gadgets():
+        print(f"  - {gadget.get_name()}: {gadget.get_icon()} ({'enabled' if manager.is_enabled(gadget.get_name()) else 'disabled'})")
+    
+    # Test configuration dialog
+    configure_gadgets()

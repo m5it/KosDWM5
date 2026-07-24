@@ -1,8 +1,21 @@
 # Changelog
 
-## [1.0.8] - 2026-07-23
+## [1.1.0] - 2026-07-23
+
+### Added
+- **Rich Text Editor for Notices** - Full formatting support (bold, italic, underline, font, size, color)
+- **Double-click to Edit Notices** - Quick edit by double-clicking any notice
+- **HTML Content Persistence** - Rich text survives save/load cycles
+
+### Fixed
+- **Notices Disappearing** - Fixed dialog freezing issue when clicking notices
+- **Dark Theme Consistency** - All notices dialogs now use proper dark theme
 
 ### Changed
+- Notices list now shows content preview (HTML stripped for display)
+- Notice detail view renders HTML with full formatting
+
+## [1.0.8] - 2026-07-23
 - Auto-incremented version from 1.0.7
 - Files changed: HISTORY.md, PLAN.md, __pycache__/kosdwm_diagnose.cpython-314.pyc, background.log, current_task.txt and 13 more
 

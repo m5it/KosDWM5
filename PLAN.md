@@ -1,34 +1,46 @@
-# Plan: Improve Notices Gadget with Rich Text Editor and Fix Click Behavior
-## ID: 1784896351.5550754
-## Created: 2026-07-24 13:32:31
+# Plan: Notices Gadget UI Improvements
+## ID: 1784898068.7467737
+## Created: 2026-07-24 14:01:08
 ## Status: in_progress
 
 ### Goal:
-Fix and enhance the Notices Gadget:
-1. Fix notice disappearing/hiding when clicked - investigate click behavior and ensure notices stay visible
-2. Add double-click to edit notices (open editor dialog)
-3. Replace simple text input with rich text editor supporting: bold, italic, underline, font size, color
-4. Ensure notices are properly saved and loaded with rich text content
-5. Fix any other noticed issues with the notices system
+Fix and improve the Notices Gadget UI/UX:
 
-### Tasks (6):
-1. [pending] Fix Notice Click Behavior - Prevent Disappearing
-   ID: 1784896356.0510716
+1. Fix click behavior: Single click = select only, Double click = open edit dialog (same as add)
+2. Fix badge update: Panel icon number should decrease when deleting notices
+3. Unify add/edit: Both should use the same rich text editor panel with all controls
+4. Fix list display: Strip HTML tags so raw HTML is not visible in the notices list
 
-2. [pending] Add Double-Click to Edit Notices
-   ID: 1784896360.1481884
+Ensure all changes maintain the dark theme and proper dialog behavior.
 
-3. [pending] Create Rich Text Editor for Notice Content
-   ID: 1784896365.0040858
+### Tasks (9):
+1. [in_progress] Debug QListWidget Visibility and Layout
+   ID: 1784898071.5605338
+   Progress logs: 1 entries
 
-4. [pending] Update NoticesStore to Handle Rich Text
-   ID: 1784896368.7485495
+2. [pending] Verify Notices Data Loading
+   ID: 1784898075.4183316
 
-5. [pending] Test Complete Notices Flow
-   ID: 1784896372.8446114
+3. [pending] Fix List Widget Layout and Sizing
+   ID: 1784898079.7203348
 
-6. [pending] Apply Dark Theme to Notices Dialogs
-   ID: 1784896376.7362611
+4. [pending] Test and Verify Notices Display
+   ID: 1784898082.6430638
+
+5. [pending] Fix Click Behavior - Single Select, Double Click Edit
+   ID: 1784899165.746007
+
+6. [pending] Fix Badge Update on Delete
+   ID: 1784899170.2516267
+
+7. [pending] Unify Add and Edit Dialogs
+   ID: 1784899173.9409602
+
+8. [pending] Strip HTML in Notices List Display
+   ID: 1784899178.239329
+
+9. [pending] Test All Notice Operations
+   ID: 1784899181.925664
 
 ---
 

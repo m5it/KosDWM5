@@ -277,7 +277,6 @@ class Panel(QFrame):
                 selection-background-color: #666666;
             }
         """)
-    
     def load_gadgets(self):
         """Load gadgets into the panel"""
         from src.gadgets_pyqt5 import GadgetManager
@@ -291,6 +290,9 @@ class Panel(QFrame):
         # Create gadget manager
         self.gadget_manager = GadgetManager()
         
+        # Store gadget->button mapping for refresh
+        self._gadget_buttons = {}
+        
         # Add enabled gadgets
         for gadget in self.gadget_manager.get_enabled_gadgets():
             btn = QPushButton(gadget.get_icon())
@@ -300,6 +302,17 @@ class Panel(QFrame):
             btn._gadget = gadget
             btn.clicked.connect(self._on_gadget_clicked)
             self.gadgets_layout.addWidget(btn)
+            # Store mapping
+            self._gadget_buttons[gadget.get_name()] = btn
+            # Set panel reference on gadget for refresh notifications
+            gadget.set_panel(self)
+    
+    def refresh_gadget_icon(self, gadget):
+        """Refresh icon for a specific gadget"""
+        if hasattr(self, '_gadget_buttons') and gadget.get_name() in self._gadget_buttons:
+            btn = self._gadget_buttons[gadget.get_name()]
+            btn.setText(gadget.get_icon())
+            btn.setToolTip(gadget.get_tooltip())
     
     def _on_gadget_clicked(self):
         """Handle gadget button click"""

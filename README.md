@@ -3,7 +3,6 @@
 A dynamic window manager with Python-based gadget system. Now with PyQt5!
 
 ## Features
-
 - **Dynamic Window Management** - Tiling window manager for X11
 - **PyQt5 Panel** - Modern Qt-based panel with gadgets and menus
 - **Auto-Generative Menus** - Dynamic menus from `~/.config/KosDWM/Menus/` directory structure
@@ -12,10 +11,13 @@ A dynamic window manager with Python-based gadget system. Now with PyQt5!
   - `.py` scripts = runnable with `run()` function
   - `windowScript` = looping command output (like `lsof`)
 - **Gadget System** - Pluggable Python gadgets for the panel
+  - **Notices Gadget** - Rich text editor with formatting (bold, italic, underline, font, size, color)
+  - Double-click to edit notices
+  - HTML content persistence
 - **Window Switcher** - Dropdown to switch between running windows (wmctrl)
 - **Notices & Reminders** - Built-in notification system with HTTP API
+- **Dark Theme** - Consistent dark styling across all dialogs
 - **Auto-Versioning** - Automatic version increment on commits
-
 ## Quick Start
 
 ```bash
