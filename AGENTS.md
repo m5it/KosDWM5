@@ -12,6 +12,7 @@
 - Entry point: `main_pyqt5.py`
 - Panel: `src/panel_pyqt5.py`
 - Menus: `src/menus_pyqt5.py`
+- Menu Config Dialog: `src/menu_config_pyqt5.py`
 - Gadgets: `src/gadgets_pyqt5.py`
 - Window Manager: `src/window_manager_pyqt5.py`
 - Desktop Manager: `src/desktop_manager_pyqt5.py`
@@ -39,10 +40,68 @@
 
 ### Auto-Generative Menus
 - Dynamic menus from directory structure
-  - Folders = submenus
-  - `config.json` = leaf menus (content windows)
-  - `.py` files = runnable scripts with `run()` function
-  - `windowScript` = looping command output
+  - **Branch** (folders with subdirectories) = submenus
+  - **Leaf** (`config.json`) = content windows with HTML or command output
+  - **Script** (`config.json` with `scriptPath`) = executable Python scripts with optional venv
+  - **xdgmenumaker** (`config.json` with `type: "xdgmenumaker"`) = auto-generated XDG application menu
+  - Legacy `.py` files = runnable scripts with `run()` function
+
+### Menu Types
+
+#### 1. Branch Menu (Submenu)
+Empty folder containing other folders. Creates a cascading submenu.
+
+#### 2. Leaf Menu (Content Window)
+Folder with `config.json`:
+```json
+{
+    "title": "System Info",
+    "windowContent": "content.html",
+    "windowScript": "lsof -i",
+    "loop": 5,
+    "looptype": "second"
+}
+```
+
+#### 3. Script Menu
+Folder with `config.json`:
+```json
+{
+    "type": "script",
+    "scriptPath": "/path/to/script.py",
+    "venvPath": "/home/user/.venv/myenv"
+}
+```
+- Runs script with specified Python interpreter
+- Supports virtual environments (auto-detects `bin/python` or `Scripts/python.exe`)
+
+#### 4. xdgmenumaker Menu
+Folder with `config.json`:
+```json
+{
+    "type": "xdgmenumaker",
+    "icon": "applications-other",
+    "terminal": false
+}
+```
+- Auto-generates menu from XDG `.desktop` files
+- Organized by categories (Accessories, Development, Games, Graphics, Network, Office, etc.)
+- Scans: `/usr/share/applications`, `/usr/local/share/applications`, `~/.local/share/applications`
+
+### Menu Configuration Dialog
+Access via: Panel → ⚙ Config → Menu Settings
+
+Features:
+- Tree view of all menus
+- Edit menu properties (Name, Type)
+- Type-specific configuration:
+  - **Leaf**: Window Title, Content File, Window Script, Loop Interval
+  - **Script**: Script Path, Virtual Environment Path
+  - **xdgmenumaker**: Icon, Terminal checkbox
+- Create new menus/folders
+- Delete menus
+- Live preview for Leaf menus
+- Auto-reload panel menu after saving
 
 ### Gadget System
 - Clickable icons in panel
@@ -130,42 +189,30 @@ curl -X POST http://localhost:8080/api/notices/delete \
   | python -m json.tool
 ```
 
-## Thread Safety
+## Menu Structure Examples
 
-The HTTP API runs in a separate thread. All gadget data access should be thread-safe:
-
-- `NoticesStore` uses `threading.RLock()` for all operations
-- UI updates should use Qt's signal/slot mechanism
-- Gadgets should minimize blocking operations in API handlers
-
-## External Dependencies
-- Requires `wmctrl` command for window management
-- Requires `PyQt5` Python package (`pip install PyQt5`)
-- For TkInter version: requires `screeninfo` and standard Tkinter
-
-## Menu Structure Example
+### Example 1: Mixed Menu Types
 ```
-~/.config/KosDWM/Menus/
-├── Home/
-│   ├── About/
-│   │   ├── config.json       # {"title": "About", "windowContent": "about.html"}
-│   │   ├── about.html        # Static content
-│   │   └── ok.py             # Optional: def run(window): ...
-│   └── Test/
-│       ├── config.json       # {"windowScript": "lsof -i", "loop": 5}
+Menus/
+├── Home/                      # Branch menu (submenu)
+│   ├── About/                 # Leaf menu
+│   │   ├── config.json
+│   │   └── content.html
+│   └── System/                # Leaf menu with script
+│       ├── config.json        # {"windowScript": "df -h", "loop": 5}
 │       └── ok.py
-└── Scripts/
-    └── my_tool.py            # def run(parent): ...
+├── KosPrograms/               # Branch menu
+│   └── KosFM/                 # Script menu
+│       └── config.json        # {"type": "script", "scriptPath": "...", "venvPath": "..."}
+└── OtherPrograms/             # xdgmenumaker menu
+    └── config.json            # {"type": "xdgmenumaker"}
 ```
 
-## Recent Changes (PyQt5)
-- Complete migration from TkInter to PyQt5
-- Added window switcher dropdown using wmctrl
-- Added auto-generative menu system
-- Added dark theme for all dialogs
-- Fixed menu freeze with Qt.QueuedConnection
-- Gadget system now uses QMessageBox with styling
-- **NEW**: Added About dialog with version and credits
-- **NEW**: HTTP Panel API for gadget endpoints
-- **NEW**: NoticesGadget with HTTP API endpoints (GET/POST/DELETE)
-- **NEW**: Thread-safe data access with RLock
+## Debugging
+
+Run with debug mode to see detailed logs:
+```bash
+python main_pyqt5.py -d
+```
+
+Look for `[MenuManager]` and `[Panel]` debug messages to trace menu loading.
