@@ -385,6 +385,7 @@ class Panel(QFrame):
     
     def build_menus_menu(self):
         """Build the dynamic menus"""
+        print(f"[Panel] build_menus_menu called")
         menu = QMenu(self)
         
         # Light theme for menu
@@ -411,11 +412,51 @@ class Panel(QFrame):
             }
         """)
         # Load dynamic menus from directory structure
-        for menu_data in self.menu_manager.load_menus():
-            if menu_data.get("type") == "branch":
+        menus = self.menu_manager.load_menus()
+        print(f"[Panel] Loaded {len(menus)} menus from menu_manager")
+        
+        for menu_data in menus:
+            menu_name = menu_data.get("name")
+            menu_type = menu_data.get("type")
+            print(f"[Panel] Processing menu: {menu_name} (type={menu_type})")
+            
+            if menu_type == "xdgmenumaker":
+                # xdgmenumaker generates its own submenu
+                print(f"[Panel]  Adding xdgmenumaker menu: {menu_name}")
+                xdg_menu = self.menu_manager._generate_xdg_menu(menu_data)
+                # Add as submenu
+                submenu = menu.addMenu(menu_name)
+                # Copy actions from xdg_menu to submenu
+                for action in xdg_menu.actions():
+                    if action.menu():
+                        new_submenu = submenu.addMenu(action.text())
+                        for subaction in action.menu().actions():
+                            new_submenu.addAction(subaction)
+                    elif action.isSeparator():
+                        submenu.addSeparator()
+                    else:
+                        submenu.addAction(action)
+            elif menu_type == "script":
+                # Script menu
+                print(f"[Panel]  Adding script menu: {menu_name}")
+                action = menu.addAction(menu_name)
+                script_path = menu_data.get("path", "")
+                venv_path = menu_data.get("venv", "")
+                action.triggered.connect(
+                    lambda checked, p=script_path, v=venv_path: self.menu_manager._run_script(p, v)
+                )
+            elif menu_type == "leaf":
+                # Leaf menu
+                print(f"[Panel]  Adding leaf menu: {menu_name}")
+                action = menu.addAction(menu_name)
+                action.triggered.connect(
+                    lambda checked, m=menu_data: self.menu_manager._open_leaf_menu(m)
+                )
+            elif menu_type == "branch":
                 # Create top-level submenu
                 submenu = menu.addMenu(menu_data["name"])
                 self.menu_manager._populate_menu(submenu, menu_data.get("items", []))
+                print(f"[Panel]  Added branch menu: {menu_name}")
         
         menu.addSeparator()
         menu.addAction("Exit", self.window().close)
@@ -464,7 +505,14 @@ class Panel(QFrame):
         from src.menu_config_pyqt5 import MenuConfigDialog
         
         dialog = MenuConfigDialog(self)
+        # Connect signal to reload menus when changes are saved
+        dialog.menus_changed.connect(self.reload_menus)
         dialog.exec_()
+    
+    def reload_menus(self):
+        """Reload menus from disk and refresh the menu button"""
+        # Clear and rebuild the menus menu
+        self.menus_button.setMenu(self.build_menus_menu())
     
     def open_datetime_config(self):
         """Open date/time configuration"""

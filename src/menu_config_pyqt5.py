@@ -15,13 +15,16 @@ from PyQt5.QtWidgets import (
     QFormLayout, QGroupBox, QMessageBox, QInputDialog,
     QSplitter, QWidget, QComboBox, QSpinBox, QCheckBox
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 
 
 class MenuConfigDialog(QDialog):
     """
     Configuration dialog for managing auto-generative menus
     """
+    
+    # Signal emitted when menus are modified and saved
+    menus_changed = pyqtSignal()
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -196,9 +199,11 @@ class MenuConfigDialog(QDialog):
         form_layout.addRow("Name:", self.name_edit)
         
         self.type_combo = QComboBox()
-        self.type_combo.addItems(["Branch (submenu)", "Leaf (content window)", "Script (.py file)"])
+        self.type_combo.addItems(["Branch (submenu)", "Leaf (content window)", "Script (.py file)", "xdgmenumaker"])
         self.type_combo.currentIndexChanged.connect(self.on_type_changed)
         form_layout.addRow("Type:", self.type_combo)
+        
+        editor_layout.addLayout(form_layout)
         
         # Leaf config
         self.leaf_group = QGroupBox("Leaf Menu Configuration")
@@ -222,11 +227,38 @@ class MenuConfigDialog(QDialog):
         self.loop_spin.setSuffix(" seconds")
         leaf_layout.addRow("Loop Interval:", self.loop_spin)
         
-        editor_layout.addLayout(form_layout)
         editor_layout.addWidget(self.leaf_group)
         
+        # Script config
+        self.script_group = QGroupBox("Script Configuration")
+        script_layout = QFormLayout(self.script_group)
+        
+        self.script_path_edit = QLineEdit()
+        self.script_path_edit.setPlaceholderText("/path/to/script.py")
+        script_layout.addRow("Script Path:", self.script_path_edit)
+        
+        self.venv_path_edit = QLineEdit()
+        self.venv_path_edit.setPlaceholderText("/home/user/.venv/myenv")
+        script_layout.addRow("Virtual Env:", self.venv_path_edit)
+        
+        editor_layout.addWidget(self.script_group)
+        
+        # xdgmenumaker config
+        self.xdg_group = QGroupBox("xdgmenumaker Configuration")
+        xdg_layout = QFormLayout(self.xdg_group)
+        
+        self.xdg_icon_edit = QLineEdit()
+        self.xdg_icon_edit.setPlaceholderText("applications-other")
+        xdg_layout.addRow("Icon:", self.xdg_icon_edit)
+        
+        self.xdg_terminal_check = QCheckBox("Run in terminal")
+        xdg_layout.addRow(self.xdg_terminal_check)
+        
+        editor_layout.addWidget(self.xdg_group)
+        
         # Content preview
-        editor_layout.addWidget(QLabel("Content Preview:"))
+        self.preview_label = QLabel("Content Preview:")
+        editor_layout.addWidget(self.preview_label)
         self.preview = QTextEdit()
         self.preview.setReadOnly(True)
         self.preview.setPlaceholderText("Select a menu item to preview content...")
@@ -284,8 +316,22 @@ class MenuConfigDialog(QDialog):
         # Determine type
         config_file = path / "config.json"
         if config_file.exists():
-            item.setIcon(0, self.style().standardIcon(self.style().SP_DialogOpenButton))
-            item.setToolTip(0, "Leaf menu (click to open window)")
+            try:
+                with open(config_file) as f:
+                    config = json.load(f)
+                menu_type = config.get("type", "leaf")
+                if menu_type == "script":
+                    item.setIcon(0, self.style().standardIcon(self.style().SP_FileIcon))
+                    item.setToolTip(0, "Script menu")
+                elif menu_type == "xdgmenumaker":
+                    item.setIcon(0, self.style().standardIcon(self.style().SP_DialogHelpButton))
+                    item.setToolTip(0, "xdgmenumaker (XDG apps)")
+                else:
+                    item.setIcon(0, self.style().standardIcon(self.style().SP_DialogOpenButton))
+                    item.setToolTip(0, "Leaf menu (click to open window)")
+            except:
+                item.setIcon(0, self.style().standardIcon(self.style().SP_DialogOpenButton))
+                item.setToolTip(0, "Leaf menu (click to open window)")
         elif any(f.suffix == '.py' for f in path.iterdir() if f.is_file()):
             item.setIcon(0, self.style().standardIcon(self.style().SP_FileIcon))
             item.setToolTip(0, "Script menu")
@@ -316,42 +362,64 @@ class MenuConfigDialog(QDialog):
         py_files = list(path.glob("*.py"))
         
         if config_file.exists():
-            # Leaf menu
-            self.type_combo.setCurrentIndex(1)
             try:
                 with open(config_file) as f:
                     config = json.load(f)
-                self.title_edit.setText(config.get("title", ""))
-                self.content_edit.setText(config.get("windowContent", ""))
-                self.script_edit.setText(config.get("windowScript", ""))
-                self.loop_spin.setValue(config.get("loop", 0))
                 
-                # Show preview
-                content_file = path / config.get("windowContent", "")
-                if content_file.exists():
-                    try:
-                        with open(content_file) as f:
-                            self.preview.setText(f.read()[:1000])
-                    except:
-                        self.preview.setText("Unable to read content file")
+                menu_type = config.get("type", "leaf")
+                
+                if menu_type == "script":
+                    # Script menu
+                    self.type_combo.setCurrentIndex(2)
+                    self.script_path_edit.setText(config.get("scriptPath", ""))
+                    self.venv_path_edit.setText(config.get("venvPath", ""))
+                    self.preview.setText("Python script: " + config.get("scriptPath", "Not set"))
+                elif menu_type == "xdgmenumaker":
+                    # xdgmenumaker menu
+                    self.type_combo.setCurrentIndex(3)
+                    self.xdg_icon_edit.setText(config.get("icon", ""))
+                    self.xdg_terminal_check.setChecked(config.get("terminal", False))
+                    self.preview.setText("xdgmenumaker - generates menu from XDG .desktop files")
                 else:
-                    self.preview.setText("Content file not found")
+                    # Leaf menu
+                    self.type_combo.setCurrentIndex(1)
+                    self.title_edit.setText(config.get("title", ""))
+                    self.content_edit.setText(config.get("windowContent", ""))
+                    self.script_edit.setText(config.get("windowScript", ""))
+                    self.loop_spin.setValue(config.get("loop", 0))
+                    
+                    # Show preview
+                    content_file = path / config.get("windowContent", "")
+                    if content_file.exists():
+                        try:
+                            with open(content_file) as f:
+                                self.preview.setText(f.read()[:1000])
+                        except:
+                            self.preview.setText("Unable to read content file")
+                    else:
+                        self.preview.setText("Content file not found")
             except Exception as e:
                 self.preview.setText("Error loading config: " + str(e))
         elif py_files:
-            # Script menu
+            # Script menu (legacy - .py file directly)
             self.type_combo.setCurrentIndex(2)
-            self.leaf_group.setVisible(False)
             self.preview.setText("Python script: " + py_files[0].name)
         else:
             # Branch menu
             self.type_combo.setCurrentIndex(0)
             self.leaf_group.setVisible(False)
+            self.script_group.setVisible(False)
+            self.xdg_group.setVisible(False)
             self.preview.setText("Branch menu (contains sub-items)")
     
     def on_type_changed(self, index):
-        """Handle type change"""
-        self.leaf_group.setVisible(index == 1)  # Show only for leaf
+        """Handle type change - show/hide appropriate groups"""
+        # index: 0=Branch, 1=Leaf, 2=Script, 3=xdgmenumaker
+        self.leaf_group.setVisible(index == 1)  # Show only for Leaf
+        self.script_group.setVisible(index == 2)  # Show only for Script
+        self.xdg_group.setVisible(index == 3)  # Show only for xdgmenumaker
+        self.preview_label.setVisible(index != 2 and index != 3)  # Hide preview for Script/xdgmenumaker
+        self.preview.setVisible(index != 2 and index != 3)  # Hide preview for Script/xdgmenumaker
     
     def new_menu(self):
         """Create a new top-level menu"""
@@ -430,21 +498,45 @@ class MenuConfigDialog(QDialog):
             return
         
         config_file = self.current_item / "config.json"
+        type_index = self.type_combo.currentIndex()
         
         try:
-            config = {
-                "title": self.title_edit.text(),
-                "windowContent": self.content_edit.text(),
-                "windowScript": self.script_edit.text(),
-                "loop": self.loop_spin.value(),
-                "looptype": "second"
-            }
+            config = {}
             
-            # Remove empty values
-            config = {k: v for k, v in config.items() if v}
+            if type_index == 0:  # Branch
+                config["type"] = "branch"
+            elif type_index == 1:  # Leaf
+                config = {
+                    "title": self.title_edit.text(),
+                    "windowContent": self.content_edit.text(),
+                    "windowScript": self.script_edit.text(),
+                    "loop": self.loop_spin.value(),
+                    "looptype": "second"
+                }
+                # Remove empty values
+                config = {k: v for k, v in config.items() if v}
+            elif type_index == 2:  # Script
+                config = {
+                    "type": "script",
+                    "scriptPath": self.script_path_edit.text(),
+                    "venvPath": self.venv_path_edit.text()
+                }
+                # Remove empty values
+                config = {k: v for k, v in config.items() if v}
+            elif type_index == 3:  # xdgmenumaker
+                config = {
+                    "type": "xdgmenumaker",
+                    "icon": self.xdg_icon_edit.text(),
+                    "terminal": self.xdg_terminal_check.isChecked()
+                }
+                # Remove empty values
+                config = {k: v for k, v in config.items() if v}
             
             with open(config_file, 'w') as f:
                 json.dump(config, f, indent=2)
+            
+            # Emit signal to notify panel to reload menus
+            self.menus_changed.emit()
             
             QMessageBox.information(self, "Success", "Configuration saved!")
             self.refresh_tree()

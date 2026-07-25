@@ -1,4 +1,4 @@
-Plan: Add About Window and HTTP Panel API for Gadgets
-Progress: 5/5 completed (0 blocked)
+Plan: (untitled)
+Progress: 1/1 completed (0 blocked)
 No task in progress.
-Updated: 2026-07-24 18:53:05
+Updated: 2026-07-25 12:59:58
