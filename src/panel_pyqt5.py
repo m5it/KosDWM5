@@ -710,8 +710,18 @@ class Panel(QFrame):
                 venv_path = menu_data.get("venv", "")
                 action.triggered.connect(
                     lambda checked, p=script_path, v=venv_path: 
-                    self.menu_manager._run_script_menu(p, v)
+                    self.menu_manager._run_script(p, v)
                 )
+            elif menu_type == "leaf":
+                # Leaf menu - open content window
+                action = menu.addAction(menu_name)
+                action.triggered.connect(
+                    lambda checked, m=menu_data: self.menu_manager._open_leaf_menu(m)
+                )
+            elif menu_type == "branch":
+                # Branch menu - create submenu with items
+                submenu = menu.addMenu(menu_name)
+                self._populate_submenu(submenu, menu_data.get("items", []))
             elif menu_type == "separator":
                 menu.addSeparator()
         
@@ -721,6 +731,44 @@ class Panel(QFrame):
         refresh_action.triggered.connect(self._refresh_menus)
         
         return menu
+    
+    def _populate_submenu(self, menu, items):
+        """Recursively populate a submenu with items"""
+        for item in items:
+            item_name = item.get("name")
+            item_type = item.get("type")
+            
+            if item_type == "separator":
+                menu.addSeparator()
+            elif item_type == "branch":
+                # Nested submenu
+                submenu = menu.addMenu(item_name)
+                self._populate_submenu(submenu, item.get("items", []))
+            elif item_type == "xdgmenumaker":
+                # Generate XDG menu dynamically
+                xdg_menu = self.menu_manager._generate_xdg_menu(item)
+                for action in xdg_menu.actions():
+                    if action.menu():
+                        new_submenu = menu.addMenu(action.text())
+                        for subaction in action.menu().actions():
+                            new_submenu.addAction(subaction)
+                    elif action.isSeparator():
+                        menu.addSeparator()
+                    else:
+                        menu.addAction(action)
+            elif item_type == "script":
+                action = menu.addAction(item_name)
+                script_path = item.get("path", "")
+                venv_path = item.get("venv", "")
+                action.triggered.connect(
+                    lambda checked, p=script_path, v=venv_path: 
+                    self.menu_manager._run_script(p, v)
+                )
+            elif item_type == "leaf":
+                action = menu.addAction(item_name)
+                action.triggered.connect(
+                    lambda checked, m=item: self.menu_manager._open_leaf_menu(m)
+                )
     
     def _refresh_menus(self):
         self.menus_button.setMenu(self.build_menus_menu())
