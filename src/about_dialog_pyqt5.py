@@ -80,7 +80,7 @@ class AboutDialog(QDialog):
         layout.addWidget(credits_label)
         
         credits = QLabel(
-            "<b>Created by:</b> B.K. (kosumosu)<br><br>"
+            "<b>Created by:</b> B.K. (w4d4f4k)<br><br>"
             "<b>Contributors:</b><br>"
             "OpenCode (editor + BigPickle)<br>"
             "Ollama models"
@@ -121,44 +121,51 @@ class AboutDialog(QDialog):
             version_file = current.parent / "AUTOVERSION.py"
             if version_file.exists():
                 namespace = {}
-                exec(open(version_file).read(), namespace)
+                exec(version_file.read_text(), namespace)
                 return namespace.get("VERSION", "unknown")
             return "unknown"
-        except Exception:
-            return "unknown"
+        except Exception as e:
+            return f"unknown ({e})"
     
     def get_system_info(self):
-        """Get system information string"""
+        """Get system information"""
         try:
             from PyQt5.QtCore import QT_VERSION_STR
-            py_version = platform.python_version()
             qt_version = QT_VERSION_STR
-            plat = f"{platform.system()} {platform.release()}"
-            return f"Python {py_version} | Qt {qt_version} | {plat}"
-        except Exception:
-            return f"Python {platform.python_version()}"
+        except:
+            qt_version = "unknown"
+        
+        return (
+            f"Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro} | "
+            f"Qt {qt_version} | "
+            f"{platform.system()} {platform.release()}"
+        )
     
     def apply_dark_theme(self):
-        """Apply dark theme styling consistent with other dialogs"""
+        """Apply dark theme styling to the dialog"""
         self.setStyleSheet("""
             QDialog {
                 background-color: #1a1a1a;
+                border: 1px solid #444444;
+                border-radius: 8px;
             }
             QLabel {
                 color: #ffffff;
+                font-family: Arial, sans-serif;
             }
             QPushButton {
-                background-color: #4a4a4a;
-                color: #ffffff;
-                border: 1px solid #555555;
+                background-color: #4a90d9;
+                color: white;
+                border: none;
                 padding: 8px 16px;
                 border-radius: 4px;
                 font-weight: bold;
+                font-size: 12px;
             }
             QPushButton:hover {
-                background-color: #5a5a5a;
+                background-color: #5aa0e9;
             }
             QPushButton:pressed {
-                background-color: #6a6a6a;
+                background-color: #3a80c9;
             }
         """)

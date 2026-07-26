@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.11] - 2026-07-26
+
+### Changed
+- Auto-incremented from 1.2.10
+- Files: HISTORY.md, __pycache__/AUTOVERSION.cpython-313.pyc, background.log, src/__pycache__/about_dialog_pyqt5.cpython-313.pyc, src/about_dialog_pyqt5.py +1
+
+
 ## [1.2.10] - 2026-07-26
 
 ### Changed

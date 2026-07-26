@@ -4847,3 +4847,146 @@ All tasks are complete! Here's a summary of the datetime settings fix:
 
 <!-- {"role": "tool", "content": "{'plan_id': '1784980704.9931352', 'status': 'completed', 'summary': 'Plan finished'}", "sessionId": 339, "rowId": 250, "timestamp": 1785084553.4692008, "date": "2026-07-26", "name": "jobDone"} -->
 
+## [17:53] USER
+change this text on about window please.
+> 
+> it writes:
+> 
+> Created by: B.K. (kosumosu)
+> 
+> change kosumosu to w4d4f4k
+> 
+> thanks
+
+---
+
+<!-- {"role": "user", "content": "change this text on about window please.\n\nit writes:\n\nCreated by: B.K. (kosumosu)\n\nchange kosumosu to w4d4f4k\n\nthanks", "sessionId": 339, "rowId": 251, "timestamp": 1785084824.0084124, "date": "2026-07-26"} -->
+
+## [17:53] ASSISTANT
+<ReadFile>
+> <fileName>src/about_dialog_pyqt5.py</fileName>
+> <max_chars>4000</max_chars>
+> </ReadFile>
+
+---
+
+<!-- {"role": "assistant", "content": "<ReadFile>\n<fileName>src/about_dialog_pyqt5.py</fileName>\n<max_chars>4000</max_chars>\n</ReadFile>", "sessionId": 339, "rowId": 251, "timestamp": 1785084828.0627987, "date": "2026-07-26", "thinking": "", "prompt_tokens": 167682, "response_tokens": 71} -->
+
+## [17:53] tool: ReadFile
+#!/usr/bin/env python3
+> """
+> About Dialog for KosDWM PyQt5
+> 
+> Dark-themed dialog showing version, credits, and system information.
+> """
+> 
+> import sys
+> import platform
+> 
+> from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
+> from PyQt5.QtCore import Qt
+> from PyQt5.QtGui import QFont
+> 
+> 
+> class AboutDialog(QDialog):
+>     """
+>     About dialog for KosDWM with dark theme styling.
+>     
+>     Displays:
+>     - KosDWM version (from AUTOVERSION)
+>     - Credits (B.K., OpenCode, etc.)
+>     - System...
+> (truncated, 4115 chars total)
+
+---
+
+<!-- {"role": "tool", "content": "#!/usr/bin/env python3\n\"\"\"\nAbout Dialog for KosDWM PyQt5\n\nDark-themed dialog showing version, credits, and system information.\n\"\"\"\n\nimport sys\nimport platform\n\nfrom PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton\nfrom PyQt5.QtCore import Qt\nfrom PyQt5.QtGui import QFont\n\n\nclass AboutDialog(QDialog):\n    \"\"\"\n    About dialog for KosDWM with dark theme styling.\n    \n    Displays:\n    - KosDWM version (from AUTOVERSION)\n    - Credits (B.K., OpenCode, etc.)\n    - System info (Python version, Qt version, Platform)\n    \"\"\"\n    \n    def __init__(self, parent=None):\n        super().__init__(parent)\n        self.setWindowTitle(\"About KosDWM\")\n        self.setFixedSize(420, 340)\n        self.setup_ui()\n        self.apply_dark_theme()\n    \n    def setup_ui(self):\n        \"\"\"Setup the dialog UI components\"\"\"\n        layout = QVBoxLayout(self)\n        layout.setSpacing(12)\n        layout.setContentsMargins(25, 25, 25, 25)\n        \n        # Title\n        title = QLabel(\"KosDWM\")\n        title_font = QFont(\"Arial\", 22, QFont.Bold)\n        title.setFont(title_font)\n        title.setStyleSheet(\"color: #4a90d9;\")\n        title.setAlignment(Qt.AlignCenter)\n        layout.addWidget(title)\n        \n        # Version\n        version_text = self.get_version()\n        version = QLabel(f\"Version {version_text}\")\n        version.setStyleSheet(\"color: #aaaaaa; font-size: 13px;\")\n        version.setAlignment(Qt.AlignCenter)\n        layout.addWidget(version)\n        \n        # Separator line\n        separator = QLabel(\"\u2500\" * 30)\n        separator.setStyleSheet(\"color: #444444;\")\n        separator.setAlignment(Qt.AlignCenter)\n        layout.addWidget(separator)\n        \n        # Description\n        desc = QLabel(\n            \"A dynamic window manager with Python-based gadget system.\\n\"\n            \"Designed for flexibility and extensibility.\"\n        )\n        desc.setWordWrap(True)\n        desc.setStyleSheet(\"color: #cccccc; font-size: 12px;\")\n        desc.setAlignment(Qt.AlignCenter)\n        layout.addWidget(desc)\n        \n        # Separator\n        separator2 = QLabel(\"\u2500\" * 30)\n        separator2.setStyleSheet(\"color: #444444;\")\n        separator2.setAlignment(Qt.AlignCenter)\n        layout.addWidget(separator2)\n        \n        # Credits section\n        credits_label = QLabel(\"<b>Credits</b>\")\n        credits_label.setStyleSheet(\"color: #ffffff; font-size: 13px;\")\n        credits_label.setAlignment(Qt.AlignCenter)\n        layout.addWidget(credits_label)\n        \n        credits = QLabel(\n            \"<b>Created by:</b> B.K. (kosumosu)<br><br>\"\n            \"<b>Contributors:</b><br>\"\n            \"OpenCode (editor + BigPickle)<br>\"\n            \"Ollama models\"\n        )\n        credits.setWordWrap(True)\n        credits.setStyleSheet(\"color: #cccccc; font-size: 12px; line-height: 1.4;\")\n        credits.setAlignment(Qt.AlignCenter)\n        layout.addWidget(credits)\n        \n        layout.addStretch()\n        \n        # System Info\n        sys_info = QLabel(self.get_system_info())\n        sys_info.setWordWrap(True)\n        sys_info.setStyleSheet(\"color: #888888; font-size: 10px;\")\n        sys_info.setAlignment(Qt.AlignCenter)\n        layout.addWidget(sys_info)\n        \n        # OK button\n        btn_layout = QHBoxLayout()\n        btn_layout.addStretch()\n        \n        ok_btn = QPushButton(\"OK\")\n        ok_btn.setFixedWidth(80)\n        ok_btn.clicked.connect(self.accept)\n        btn_layout.addWidget(ok_btn)\n        \n        btn_layout.addStretch()\n        layout.addLayout(btn_layout)\n    \n    def get_version(self):\n        \"\"\"Get KosDWM version from AUTOVERSION\"\"\"\n        try:\n            import sys\n            from pathlib import Path\n            # Look for AUTOVERSION.py in parent of src directory\n            current = Path(__file__).parent\n            version_file = current.parent / \"AUTOVERSION.py\"\n            if version_file.exists():\n                namespace = {}\n\n[-- File truncated: 1394 chars remaining (26.1%). Use <ReadFile><fileName>src/about_dialog_pyqt5.py</fileName><max_chars>1394</max_chars></ReadFile> to read further. --]", "sessionId": 339, "rowId": 251, "timestamp": 1785084828.0652323, "date": "2026-07-26", "name": "ReadFile"} -->
+
+## [17:53] ASSISTANT
+<ReplaceLine>
+> <fileName>src/about_dialog_pyqt5.py</fileName>
+> <fromLine>81</fromLine>
+> <toLine>81</toLine>
+> <replacement>        credits = QLabel(
+>             "<b>Created by:</b> B.K. (w4d4f4k)<br><br>"
+>             "<b>Contributors:</b><br>"
+>             "OpenCode (editor + BigPickle)<br>"
+>             "Ollama models"
+>         )</replacement>
+> <confirmed>true</confirmed>
+> </ReplaceLine>
+
+---
+
+<!-- {"role": "assistant", "content": "<ReplaceLine>\n<fileName>src/about_dialog_pyqt5.py</fileName>\n<fromLine>81</fromLine>\n<toLine>81</toLine>\n<replacement>        credits = QLabel(\n            \"<b>Created by:</b> B.K. (w4d4f4k)<br><br>\"\n            \"<b>Contributors:</b><br>\"\n            \"OpenCode (editor + BigPickle)<br>\"\n            \"Ollama models\"\n        )</replacement>\n<confirmed>true</confirmed>\n</ReplaceLine>", "sessionId": 339, "rowId": 251, "timestamp": 1785084833.0533743, "date": "2026-07-26", "thinking": "", "prompt_tokens": 168701, "response_tokens": 139} -->
+
+## [17:53] tool: ReplaceLine
+Line 81-81 in 'src/about_dialog_pyqt5.py' currently reads:
+> ```
+>         
+> ```
+> Proposed replacement:
+> ```
+>         credits = QLabel(
+>             "<b>Created by:</b> B.K. (w4d4f4k)<br><br>"
+>             "<b>Contributors:</b><br>"
+>             "OpenCode (editor + BigPickle)<br>"
+>             "Ollama models"
+>         )
+> ```
+> To confirm, add <confirmed>true</confirmed> to your ReplaceLine call.
+> 
+> Replaced line 81-81 in 'src/about_dialog_pyqt5.py'. (1 old line -> 6 new lines). Old content:         \n
+
+---
+
+<!-- {"role": "tool", "content": "Line 81-81 in 'src/about_dialog_pyqt5.py' currently reads:\n```\n        \n```\nProposed replacement:\n```\n        credits = QLabel(\n            \"<b>Created by:</b> B.K. (w4d4f4k)<br><br>\"\n            \"<b>Contributors:</b><br>\"\n            \"OpenCode (editor + BigPickle)<br>\"\n            \"Ollama models\"\n        )\n```\nTo confirm, add <confirmed>true</confirmed> to your ReplaceLine call.\n\nReplaced line 81-81 in 'src/about_dialog_pyqt5.py'. (1 old line -> 6 new lines). Old content:         \\n", "sessionId": 339, "rowId": 251, "timestamp": 1785084833.0606182, "date": "2026-07-26", "name": "ReplaceLine"} -->
+
+## [17:54] ASSISTANT
+<WriteFile>
+> <fileName>src/about_dialog_pyqt5.py</fileName>
+> <contentOfFile>#!/usr/bin/env python3
+> """
+> About Dialog for KosDWM PyQt5
+> 
+> Dark-themed dialog showing version, credits, and system information.
+> """
+> 
+> import sys
+> import platform
+> 
+> from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
+> from PyQt5.QtCore import Qt
+> from PyQt5.QtGui import QFont
+> 
+> 
+> class AboutDialog(QDialog):
+>     """
+>     About dialog for KosDWM with dark theme styling.
+>     
+>     Displays:
+>     - KosDWM ve...
+> (truncated, 5584 chars total)
+> </contentOfFile>
+> </WriteFile>
+
+---
+
+<!-- {"role": "assistant", "content": "<WriteFile>\n<fileName>src/about_dialog_pyqt5.py</fileName>\n<contentOfFile>#!/usr/bin/env python3\n\"\"\"\nAbout Dialog for KosDWM PyQt5\n\nDark-themed dialog showing version, credits, and system information.\n\"\"\"\n\nimport sys\nimport platform\n\nfrom PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton\nfrom PyQt5.QtCore import Qt\nfrom PyQt5.QtGui import QFont\n\n\nclass AboutDialog(QDialog):\n    \"\"\"\n    About dialog for KosDWM with dark theme styling.\n    \n    Displays:\n    - KosDWM version (from AUTOVERSION)\n    - Credits (B.K., OpenCode, etc.)\n    - System info (Python version, Qt version, Platform)\n    \"\"\"\n    \n    def __init__(self, parent=None):\n        super().__init__(parent)\n        self.setWindowTitle(\"About KosDWM\")\n        self.setFixedSize(420, 340)\n        self.setup_ui()\n        self.apply_dark_theme()\n    \n    def setup_ui(self):\n        \"\"\"Setup the dialog UI components\"\"\"\n        layout = QVBoxLayout(self)\n        layout.setSpacing(12)\n        layout.setContentsMargins(25, 25, 25, 25)\n        \n        # Title\n        title = QLabel(\"KosDWM\")\n        title_font = QFont(\"Arial\", 22, QFont.Bold)\n        title.setFont(title_font)\n        title.setStyleSheet(\"color: #4a90d9;\")\n        title.setAlignment(Qt.AlignCenter)\n        layout.addWidget(title)\n        \n        # Version\n        version_text = self.get_version()\n        version = QLabel(f\"Version {version_text}\")\n        version.setStyleSheet(\"color: #aaaaaa; font-size: 13px;\")\n        version.setAlignment(Qt.AlignCenter)\n        layout.addWidget(version)\n        \n        # Separator line\n        separator = QLabel(\"\u2500\" * 30)\n        separator.setStyleSheet(\"color: #444444;\")\n        separator.setAlignment(Qt.AlignCenter)\n        layout.addWidget(separator)\n        \n        # Description\n        desc = QLabel(\n            \"A dynamic window manager with Python-based gadget system.\\n\"\n            \"Designed for flexibility and extensibility.\"\n        )\n        desc.setWordWrap(True)\n        desc.setStyleSheet(\"color: #cccccc; font-size: 12px;\")\n        desc.setAlignment(Qt.AlignCenter)\n        layout.addWidget(desc)\n        \n        # Separator\n        separator2 = QLabel(\"\u2500\" * 30)\n        separator2.setStyleSheet(\"color: #444444;\")\n        separator2.setAlignment(Qt.AlignCenter)\n        layout.addWidget(separator2)\n        \n        # Credits section\n        credits_label = QLabel(\"<b>Credits</b>\")\n        credits_label.setStyleSheet(\"color: #ffffff; font-size: 13px;\")\n        credits_label.setAlignment(Qt.AlignCenter)\n        layout.addWidget(credits_label)\n        \n        credits = QLabel(\n            \"<b>Created by:</b> B.K. (w4d4f4k)<br><br>\"\n            \"<b>Contributors:</b><br>\"\n            \"OpenCode (editor + BigPickle)<br>\"\n            \"Ollama models\"\n        )\n        credits.setWordWrap(True)\n        credits.setStyleSheet(\"color: #cccccc; font-size: 12px; line-height: 1.4;\")\n        credits.setAlignment(Qt.AlignCenter)\n        layout.addWidget(credits)\n        \n        layout.addStretch()\n        \n        # System Info\n        sys_info = QLabel(self.get_system_info())\n        sys_info.setWordWrap(True)\n        sys_info.setStyleSheet(\"color: #888888; font-size: 10px;\")\n        sys_info.setAlignment(Qt.AlignCenter)\n        layout.addWidget(sys_info)\n        \n        # OK button\n        btn_layout = QHBoxLayout()\n        btn_layout.addStretch()\n        \n        ok_btn = QPushButton(\"OK\")\n        ok_btn.setFixedWidth(80)\n        ok_btn.clicked.connect(self.accept)\n        btn_layout.addWidget(ok_btn)\n        \n        btn_layout.addStretch()\n        layout.addLayout(btn_layout)\n    \n    def get_version(self):\n        \"\"\"Get KosDWM version from AUTOVERSION\"\"\"\n        try:\n            import sys\n            from pathlib import Path\n            # Look for AUTOVERSION.py in parent of src directory\n            current = Path(__file__).parent\n            version_file = current.parent / \"AUTOVERSION.py\"\n            if version_file.exists():\n                namespace = {}\n                exec(version_file.read_text(), namespace)\n                return namespace.get(\"VERSION\", \"unknown\")\n            return \"unknown\"\n        except Exception as e:\n            return f\"unknown ({e})\"\n    \n    def get_system_info(self):\n        \"\"\"Get system information\"\"\"\n        try:\n            from PyQt5.QtCore import QT_VERSION_STR\n            qt_version = QT_VERSION_STR\n        except:\n            qt_version = \"unknown\"\n        \n        return (\n            f\"Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro} | \"\n            f\"Qt {qt_version} | \"\n            f\"{platform.system()} {platform.release()}\"\n        )\n    \n    def apply_dark_theme(self):\n        \"\"\"Apply dark theme styling to the dialog\"\"\"\n        self.setStyleSheet(\"\"\"\n            QDialog {\n                background-color: #1a1a1a;\n                border: 1px solid #444444;\n                border-radius: 8px;\n            }\n            QLabel {\n                color: #ffffff;\n                font-family: Arial, sans-serif;\n            }\n            QPushButton {\n                background-color: #4a90d9;\n                color: white;\n                border: none;\n                padding: 8px 16px;\n                border-radius: 4px;\n                font-weight: bold;\n                font-size: 12px;\n            }\n            QPushButton:hover {\n                background-color: #5aa0e9;\n            }\n            QPushButton:pressed {\n                background-color: #3a80c9;\n            }\n        \"\"\")\n</contentOfFile>\n</WriteFile>", "sessionId": 339, "rowId": 251, "timestamp": 1785084847.4027405, "date": "2026-07-26", "thinking": "", "prompt_tokens": 168969, "response_tokens": 1288} -->
+
+## [17:54] tool: WriteFile
+src/about_dialog_pyqt5.py was created with length 5481
+
+---
+
+<!-- {"role": "tool", "content": "src/about_dialog_pyqt5.py was created with length 5481", "sessionId": 339, "rowId": 251, "timestamp": 1785084847.409439, "date": "2026-07-26", "name": "WriteFile"} -->
+
+## [17:54] ASSISTANT
+Done! I've changed "kosumosu" to "w4d4f4k" in the About dialog. The credits section now shows:
+> 
+> **Created by:** B.K. (w4d4f4k)
+
+---
+
+<!-- {"role": "assistant", "content": "Done! I've changed \"kosumosu\" to \"w4d4f4k\" in the About dialog. The credits section now shows:\n\n**Created by:** B.K. (w4d4f4k)", "sessionId": 339, "rowId": 251, "timestamp": 1785084851.8893945, "date": "2026-07-26", "thinking": "Done! I've changed \"kosumosu\" to \"w4d4f4k\" in the About dialog. The credits section now shows:\n\n**Created by:** B.K. (w4d4f4k)", "prompt_tokens": 170273, "response_tokens": 93} -->
+
