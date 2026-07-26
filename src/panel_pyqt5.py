@@ -3,11 +3,13 @@
 Panel widget for KosDWM PyQt5 version
 """
 
+import json
+from pathlib import Path
 from PyQt5.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, 
     QComboBox, QFrame, QMenu, QAction, QButtonGroup
 )
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QFont
 
 from datetime import datetime
@@ -20,8 +22,15 @@ class Panel(QFrame):
     Top panel with gadgets, menus, clock, and desktop switcher
     """
     
+    # Signal emitted when datetime settings change
+    datetime_changed = pyqtSignal()
+    
     def __init__(self, parent=None):
         super().__init__(parent)
+        
+        # Load datetime configuration
+        self.datetime_config = self._load_datetime_config()
+        
         # Height is controlled by parent window (30px)
         self.setStyleSheet("""
             QFrame {
@@ -89,15 +98,72 @@ class Panel(QFrame):
         
         self.setup_ui()
         
-        # Timer for clock updates
+        # Timer for clock updates - use configured interval
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_time)
-        self.timer.start(1000)
+        self.timer.start(self.datetime_config.get("update_interval", 1000))
         
         # Timer for window list updates
         self.window_timer = QTimer()
         self.window_timer.timeout.connect(self.update_window_list)
         self.window_timer.start(2000)  # Update every 2 seconds
+    
+    def _load_datetime_config(self):
+        """Load datetime configuration from panel.json"""
+        default_config = {
+            "show_time": True,
+            "time_format": "24h",
+            "show_seconds": False,
+            "show_date": False,
+            "date_format": "%Y-%m-%d",
+            "update_interval": 1000,
+            "timezone": "local",
+            "font_family": "Arial",
+            "font_size": 10,
+            "bold": True,
+            "color": "#ffffff"
+        }
+        
+        config_path = Path.home() / ".config" / "KosDWM" / "panel.json"
+        if config_path.exists():
+            try:
+                with open(config_path, 'r') as f:
+                    loaded = json.load(f)
+                    if "datetime" in loaded:
+                        default_config.update(loaded["datetime"])
+                        print(f"[Panel] Loaded datetime config: {loaded['datetime']}")
+            except Exception as e:
+                print(f"[Panel] Error loading datetime config: {e}")
+        
+        return default_config
+    
+    def reload_datetime_config(self):
+        """Reload datetime configuration and update display"""
+        print("[Panel] Reloading datetime configuration")
+        self.datetime_config = self._load_datetime_config()
+        
+        # Update timer interval
+        self.timer.stop()
+        self.timer.start(self.datetime_config.get("update_interval", 1000))
+        
+        # Update font
+        font = QFont(
+            self.datetime_config.get("font_family", "Arial"),
+            self.datetime_config.get("font_size", 10)
+        )
+        if self.datetime_config.get("bold", True):
+            font.setBold(True)
+        self.time_label.setFont(font)
+        
+        # Update color
+        color = self.datetime_config.get("color", "#ffffff")
+        self.time_label.setStyleSheet(f"color: {color};")
+        
+        # Force update
+        self.update_time()
+        
+        # Emit signal
+        self.datetime_changed.emit()
     
     def setup_ui(self):
         """Setup the panel UI"""
@@ -141,9 +207,17 @@ class Panel(QFrame):
         
         layout.addStretch()
         
-        # Clock
+        # Clock with configured font
+        font = QFont(
+            self.datetime_config.get("font_family", "Arial"),
+            self.datetime_config.get("font_size", 10)
+        )
+        if self.datetime_config.get("bold", True):
+            font.setBold(True)
+        
         self.time_label = QLabel("00:00")
-        self.time_label.setFont(QFont("Arial", 10, QFont.Bold))
+        self.time_label.setFont(font)
+        self.time_label.setStyleSheet(f"color: {self.datetime_config.get('color', '#ffffff')};")
         layout.addWidget(self.time_label)
         
         # Config dropdown
@@ -358,9 +432,41 @@ class Panel(QFrame):
                 traceback.print_exc()
     
     def update_time(self):
-        """Update the clock"""
-        current = datetime.now().strftime("%H:%M")
-        self.time_label.setText(current)
+        """Update the clock with configured format"""
+        parts = []
+        
+        # Get current datetime
+        now = datetime.now()
+        
+        # Build time string if enabled
+        if self.datetime_config.get("show_time", True):
+            if self.datetime_config.get("time_format") == "12h":
+                # 12-hour format
+                if self.datetime_config.get("show_seconds"):
+                    time_str = now.strftime("%I:%M:%S %p")
+                else:
+                    time_str = now.strftime("%I:%M %p")
+            else:
+                # 24-hour format
+                if self.datetime_config.get("show_seconds"):
+                    time_str = now.strftime("%H:%M:%S")
+                else:
+                    time_str = now.strftime("%H:%M")
+            parts.append(time_str)
+        
+        # Build date string if enabled
+        if self.datetime_config.get("show_date", False):
+            date_format = self.datetime_config.get("date_format", "%Y-%m-%d")
+            try:
+                date_str = now.strftime(date_format)
+                parts.append(date_str)
+            except:
+                date_str = now.strftime("%Y-%m-%d")  # Fallback
+                parts.append(date_str)
+        
+        # Join with space
+        display_text = " ".join(parts) if parts else ""
+        self.time_label.setText(display_text)
     
     def switch_desktop(self, desktop_id):
         """Switch to specified desktop"""
@@ -519,6 +625,8 @@ class Panel(QFrame):
         from src.datetime_config_pyqt5 import DateTimeConfigDialog
         
         dialog = DateTimeConfigDialog(self)
+        # Connect signal to reload datetime settings when changes are saved
+        dialog.config_saved.connect(self.reload_datetime_config)
         dialog.exec_()
     
     def open_about_dialog(self):

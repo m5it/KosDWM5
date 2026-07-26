@@ -1,9 +1,9 @@
 {
   "id": "1784980704.9931352",
-  "title": "",
-  "instructions": "",
+  "title": "Fix DateTime Settings in Panel",
+  "instructions": "The Panel class needs to load datetime configuration from panel.json and apply it when updating the time label. Currently, update_time() hardcodes \"%H:%M\" and ignores all settings like show_date, date_format, time_format, etc.",
   "startTimestamp": 1784980704.993147,
-  "endTimestamp": 1784980798.2094502,
+  "endTimestamp": 1785084553.467836,
   "tasks": {
     "1784980707.912922": {
       "id": "1784980707.912922",
@@ -13,12 +13,63 @@
       "endTimestamp": 1784980798.2081413,
       "log": [
         {
-          "timestamp": 1784980754.6485598,
+          "timestamp": 1785084124.010686,
           "text": "Added xdgmenumaker type to MenuConfigDialog: Added \"xdgmenumaker\" as 4th option in Type dropdown, created xdg_group with icon and terminal configuration fields, updated on_type_changed() to hide leaf_group and script_group for xdgmenumaker type, updated save_changes() to save xdgmenumaker config with type, icon and terminal fields, updated on_tree_item_clicked() to detect and load xdgmenumaker type from config."
         },
         {
-          "timestamp": 1784980793.0779123,
+          "timestamp": 1785084124.0106933,
           "text": "Added xdgmenumaker support to menus_pyqt5.py: detects xdgmenumaker type in _scan_menu_directory(), generates menu from XDG .desktop files with _generate_xdg_menu() organized by categories, parses .desktop files with _parse_desktop_file(), launches apps with _launch_xdg_app() handling Terminal flag and field codes, _populate_menu() handles xdgmenumaker by generating dynamic XDG menu."
+        }
+      ]
+    },
+    "1785084320.3720214": {
+      "id": "1785084320.3720214",
+      "status": "completed",
+      "instruction": "Add code to load panel.json datetime configuration in Panel.__init__. Store it as self.datetime_config with defaults for all settings (show_time, time_format, show_seconds, show_date, date_format, etc.).",
+      "startTimestamp": 1785084487.5748167,
+      "endTimestamp": 1785084508.3073173,
+      "log": [
+        {
+          "timestamp": 1785084472.019074,
+          "text": "Added datetime config loading in Panel.__init__ with _load_datetime_config() method that reads from panel.json with defaults for all settings."
+        },
+        {
+          "timestamp": 1785084504.5403845,
+          "text": "Task completed: Panel.__init__ loads datetime configuration from panel.json via _load_datetime_config() method. Configuration stored in self.datetime_config with defaults for all settings: show_time=True, time_format='24h', show_seconds=False, show_date=False, date_format='%Y-%m-%d', update_interval=1000, timezone='local', font_family='Arial', font_size=10, bold=True, color='#ffffff'."
+        }
+      ]
+    },
+    "1785084324.1829045": {
+      "id": "1785084324.1829045",
+      "status": "completed",
+      "instruction": "Modify Panel.update_time() to use self.datetime_config settings. Build the display string based on show_time, time_format, show_seconds, show_date, and date_format settings. Combine time and date appropriately with a space separator.",
+      "startTimestamp": 1785084508.3073235,
+      "endTimestamp": 1785084533.2380655,
+      "log": [
+        {
+          "timestamp": 1785084476.8413908,
+          "text": "Rewrote Panel.update_time() to use datetime_config settings - now builds display string based on show_time, time_format, show_seconds, show_date, and date_format settings. Time and date are combined with space separator."
+        },
+        {
+          "timestamp": 1785084528.2796626,
+          "text": "Task completed: Panel.update_time() now uses self.datetime_config settings. It builds the display string by checking show_time (with time_format and show_seconds), then show_date (with date_format), and combines them with space separator. Time format supports both 12h (%I:%M %p) and 24h (%H:%M) with optional seconds."
+        }
+      ]
+    },
+    "1785084328.1785846": {
+      "id": "1785084328.1785846",
+      "status": "in_progress",
+      "instruction": "Add a signal or callback mechanism so that when DateTimeConfigDialog saves changes, the Panel reloads the datetime configuration and updates the time display. This should work similar to how MenuConfigDialog's menus_changed signal works.",
+      "startTimestamp": 1785084533.2380683,
+      "endTimestamp": null,
+      "log": [
+        {
+          "timestamp": 1785084482.9456522,
+          "text": "Added datetime config reload mechanism: Panel has datetime_changed signal and reload_datetime_config() method that reloads config, updates timer interval, updates font/color, and forces update. DateTimeConfigDialog emits config_saved signal when saving. Panel.open_datetime_config() connects dialog.config_saved to reload_datetime_config."
+        },
+        {
+          "timestamp": 1785084545.8783274,
+          "text": "Task completed: Added signal mechanism for datetime settings reload. Panel has datetime_changed=pyqtSignal() and reload_datetime_config() method that reloads config, updates timer interval, font, color, and forces update. DateTimeConfigDialog has config_saved=pyqtSignal() emitted in save_and_close(). Panel.open_datetime_config() connects dialog.config_saved to reload_datetime_config, enabling live updates when settings are saved."
         }
       ]
     }

@@ -7,13 +7,13 @@ Allows configuring clock appearance and behavior
 
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QFormLayout, QGroupBox, QComboBox, QSpinBox, QCheckBox,
     QFontDialog, QColorDialog, QMessageBox
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont, QColor
 
 
@@ -21,6 +21,9 @@ class DateTimeConfigDialog(QDialog):
     """
     Configuration dialog for date/time display settings
     """
+    
+    # Signal emitted when configuration is saved
+    config_saved = pyqtSignal()
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -348,7 +351,6 @@ class DateTimeConfigDialog(QDialog):
         now = datetime.now()
         
         if self.timezone_combo.currentIndex() == 1:
-            from datetime import timezone
             now = now.astimezone(timezone.utc)
         
         try:
@@ -386,7 +388,9 @@ class DateTimeConfigDialog(QDialog):
         self.config["datetime"]["timezone"] = "UTC" if self.timezone_combo.currentIndex() == 1 else "local"
         
         if self._save_config():
-            QMessageBox.information(self, "Success", "Configuration saved!\nRestart KosDWM to apply changes.")
+            # Emit signal to notify panel to reload settings
+            self.config_saved.emit()
+            QMessageBox.information(self, "Success", "Configuration saved!")
             self.accept()
     
     def get_config(self):

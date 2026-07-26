@@ -2,7 +2,7 @@
 # Auto-generated version file - do not edit manually
 # Incremented automatically by git pre-commit hook
 
-VERSION = "1.2.9"
+VERSION = "1.2.10"
 
 if __name__ == "__main__":
     import sys

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.10] - 2026-07-26
+
+### Changed
+- Auto-incremented from 1.2.9
+- Files: HISTORY.md, PLAN.md, __pycache__/AUTOVERSION.cpython-313.pyc, background.log, current_task.txt +6
+
+
 ## [1.2.9] - 2026-07-25
 
 ### Changed
