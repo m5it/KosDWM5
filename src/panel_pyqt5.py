@@ -116,6 +116,7 @@ class Panel(QFrame):
             "show_seconds": False,
             "show_date": False,
             "date_format": "%Y-%m-%d",
+            "order": "date_time",  # "date_time" or "time_date"
             "update_interval": 1000,
             "timezone": "local",
             "font_family": "Arial",
@@ -433,7 +434,8 @@ class Panel(QFrame):
     
     def update_time(self):
         """Update the clock with configured format"""
-        parts = []
+        date_part = ""
+        time_part = ""
         
         # Get current datetime
         now = datetime.now()
@@ -443,29 +445,32 @@ class Panel(QFrame):
             if self.datetime_config.get("time_format") == "12h":
                 # 12-hour format
                 if self.datetime_config.get("show_seconds"):
-                    time_str = now.strftime("%I:%M:%S %p")
+                    time_part = now.strftime("%I:%M:%S %p")
                 else:
-                    time_str = now.strftime("%I:%M %p")
+                    time_part = now.strftime("%I:%M %p")
             else:
                 # 24-hour format
                 if self.datetime_config.get("show_seconds"):
-                    time_str = now.strftime("%H:%M:%S")
+                    time_part = now.strftime("%H:%M:%S")
                 else:
-                    time_str = now.strftime("%H:%M")
-            parts.append(time_str)
+                    time_part = now.strftime("%H:%M")
         
         # Build date string if enabled
         if self.datetime_config.get("show_date", False):
             date_format = self.datetime_config.get("date_format", "%Y-%m-%d")
             try:
-                date_str = now.strftime(date_format)
-                parts.append(date_str)
+                date_part = now.strftime(date_format)
             except:
-                date_str = now.strftime("%Y-%m-%d")  # Fallback
-                parts.append(date_str)
+                date_part = now.strftime("%Y-%m-%d")  # Fallback
         
-        # Join with space
-        display_text = " ".join(parts) if parts else ""
+        # Combine based on order setting
+        order = self.datetime_config.get("order", "date_time")
+        if order == "time_date":
+            parts = [p for p in [time_part, date_part] if p]
+        else:  # date_time
+            parts = [p for p in [date_part, time_part] if p]
+        
+        display_text = " ".join(parts)
         self.time_label.setText(display_text)
     
     def switch_desktop(self, desktop_id):

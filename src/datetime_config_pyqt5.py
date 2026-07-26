@@ -28,7 +28,7 @@ class DateTimeConfigDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("🕐 Date & Time Configuration")
-        self.setGeometry(100, 100, 450, 400)
+        self.setGeometry(100, 100, 450, 450)
         
         # Dark theme styling
         self.setStyleSheet("""
@@ -111,6 +111,7 @@ class DateTimeConfigDialog(QDialog):
                 "show_seconds": False,
                 "show_date": False,
                 "date_format": "%Y-%m-%d",
+                "order": "date_time",  # "date_time" or "time_date"
                 "update_interval": 1000,
                 "timezone": "local",
                 "font_family": "Arial",
@@ -211,6 +212,14 @@ class DateTimeConfigDialog(QDialog):
             self.date_format_combo.setCurrentIndex(date_formats.index(current_format))
         self.date_format_combo.currentIndexChanged.connect(self.update_preview)
         date_layout.addRow("Date Format:", self.date_format_combo)
+        
+        # Display order
+        self.order_combo = QComboBox()
+        self.order_combo.addItems(["Date then Time", "Time then Date"])
+        if self.config["datetime"].get("order") == "time_date":
+            self.order_combo.setCurrentIndex(1)
+        self.order_combo.currentIndexChanged.connect(self.update_preview)
+        date_layout.addRow("Display Order:", self.order_combo)
         
         layout.addWidget(date_group)
         
@@ -325,13 +334,13 @@ class DateTimeConfigDialog(QDialog):
     
     def update_preview(self):
         """Update the preview label"""
-        format_parts = []
+        date_part = ""
+        time_part = ""
         
-        if self.show_date_check.isChecked():
-            date_formats = ["%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d %B %Y", "%B %d, %Y", "%a, %d %b"]
-            date_format = date_formats[self.date_format_combo.currentIndex()]
-            format_parts.append(date_format)
+        # Get current datetime
+        now = datetime.now()
         
+        # Build time string if enabled
         if self.show_time_check.isChecked():
             if self.time_format_combo.currentIndex() == 0:
                 time_format = "%H:%M"
@@ -341,22 +350,24 @@ class DateTimeConfigDialog(QDialog):
             if self.show_seconds_check.isChecked():
                 time_format = time_format.replace("%M", "%M:%S")
             
-            format_parts.append(time_format)
+            time_part = now.strftime(time_format)
         
-        if not format_parts:
-            self.preview_label.setText("(Hidden)")
-            return
+        # Build date string if enabled
+        if self.show_date_check.isChecked():
+            date_formats = ["%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d %B %Y", "%B %d, %Y", "%a, %d %b"]
+            date_format = date_formats[self.date_format_combo.currentIndex()]
+            date_part = now.strftime(date_format)
         
-        full_format = " ".join(format_parts)
-        now = datetime.now()
+        # Combine based on order
+        if self.order_combo.currentIndex() == 1:  # Time then Date
+            parts = [p for p in [time_part, date_part] if p]
+        else:  # Date then Time
+            parts = [p for p in [date_part, time_part] if p]
         
-        if self.timezone_combo.currentIndex() == 1:
-            now = now.astimezone(timezone.utc)
-        
-        try:
-            preview_text = now.strftime(full_format)
-        except:
-            preview_text = "Invalid format"
+        if not parts:
+            preview_text = "(Hidden)"
+        else:
+            preview_text = " ".join(parts)
         
         color = self.config["datetime"]["color"]
         font_family = self.config["datetime"]["font_family"]
@@ -383,6 +394,8 @@ class DateTimeConfigDialog(QDialog):
         
         date_formats = ["%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d %B %Y", "%B %d, %Y", "%a, %d %b"]
         self.config["datetime"]["date_format"] = date_formats[self.date_format_combo.currentIndex()]
+        
+        self.config["datetime"]["order"] = "time_date" if self.order_combo.currentIndex() == 1 else "date_time"
         
         self.config["datetime"]["update_interval"] = self.interval_spin.value()
         self.config["datetime"]["timezone"] = "UTC" if self.timezone_combo.currentIndex() == 1 else "local"
