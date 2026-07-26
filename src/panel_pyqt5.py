@@ -3,7 +3,11 @@
 Panel widget for KosDWM PyQt5 version
 """
 
+import os
+import sys
 import json
+import subprocess
+import shutil
 from pathlib import Path
 from PyQt5.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, 
@@ -22,16 +26,21 @@ class Panel(QFrame):
     Top panel with gadgets, menus, clock, and desktop switcher
     """
     
-    # Signal emitted when datetime settings change
     datetime_changed = pyqtSignal()
     
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, is_clone=False):
         super().__init__(parent)
         
-        # Load datetime configuration
-        self.datetime_config = self._load_datetime_config()
+        self.is_clone = is_clone
+        self.clone_windows = []
+        self.last_desktop = -1
         
-        # Height is controlled by parent window (30px)
+        # Cache whether xdotool is available
+        self._xdotool_available = shutil.which("xdotool") is not None
+        
+        self.datetime_config = self._load_datetime_config()
+        self.monitor_config = self._load_monitor_config()
+        
         self.setStyleSheet("""
             QFrame {
                 background-color: #333333;
@@ -79,44 +88,49 @@ class Panel(QFrame):
             }
         """)
         
-        # Setup desktop manager
         from src.desktop_manager_pyqt5 import DesktopManager
         self.desktop_manager = DesktopManager(self)
         self.desktop_manager.desktop_changed.connect(self.on_desktop_changed)
         
-        # Setup menu manager
         from src.menus_pyqt5 import MenuManager
         self.menu_manager = MenuManager(self)
         
-        # Setup window manager
         from src.window_manager_pyqt5 import WindowManager
         self.window_manager = WindowManager()
         
-        # Initialize Panel API server (before setup_ui so gadgets can access it)
         self.api = PanelAPI(port=8080)
         self.api.start()
         
         self.setup_ui()
         
-        # Timer for clock updates - use configured interval
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_time)
         self.timer.start(self.datetime_config.get("update_interval", 1000))
         
-        # Timer for window list updates
         self.window_timer = QTimer()
         self.window_timer.timeout.connect(self.update_window_list)
-        self.window_timer.start(2000)  # Update every 2 seconds
+        self.window_timer.start(2000)
+        
+        # Monitor desktop switches via environment variable
+        self.desktop_monitor_timer = QTimer()
+        self.desktop_monitor_timer.timeout.connect(self._check_desktop_change)
+        self.desktop_monitor_timer.start(500)
+        print("[Panel] Desktop monitor started", flush=True)
+        
+        mode = self.monitor_config.get("mode", "primary")
+        if mode == "specific":
+            QTimer.singleShot(500, self._update_panel_position)
+        
+        QTimer.singleShot(1000, self._make_sticky)
     
     def _load_datetime_config(self):
-        """Load datetime configuration from panel.json"""
         default_config = {
             "show_time": True,
             "time_format": "24h",
             "show_seconds": False,
             "show_date": False,
             "date_format": "%Y-%m-%d",
-            "order": "date_time",  # "date_time" or "time_date"
+            "order": "date_time",
             "update_interval": 1000,
             "timezone": "local",
             "font_family": "Arial",
@@ -132,22 +146,239 @@ class Panel(QFrame):
                     loaded = json.load(f)
                     if "datetime" in loaded:
                         default_config.update(loaded["datetime"])
-                        print(f"[Panel] Loaded datetime config: {loaded['datetime']}")
             except Exception as e:
-                print(f"[Panel] Error loading datetime config: {e}")
+                print(f"[Panel] Error loading datetime config: {e}", flush=True)
         
         return default_config
     
-    def reload_datetime_config(self):
-        """Reload datetime configuration and update display"""
-        print("[Panel] Reloading datetime configuration")
-        self.datetime_config = self._load_datetime_config()
+    def _load_monitor_config(self):
+        default_config = {
+            "mode": "primary",
+            "specific_index": 0,
+            "follow_interval": 500
+        }
         
-        # Update timer interval
+        config_path = Path.home() / ".config" / "KosDWM" / "panel.json"
+        if config_path.exists():
+            try:
+                with open(config_path, 'r') as f:
+                    loaded = json.load(f)
+                    if "monitor" in loaded:
+                        default_config.update(loaded["monitor"])
+            except Exception as e:
+                print(f"[Panel] Error loading monitor config: {e}", flush=True)
+        
+        return default_config
+    
+    def get_monitors(self):
+        try:
+            result = subprocess.run(
+                ["xrandr", "--listactivemonitors"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if result.returncode == 0:
+                lines = result.stdout.strip().split('\n')
+                monitors = []
+                for line in lines[1:]:
+                    parts = line.split()
+                    if len(parts) >= 4:
+                        geom = parts[2]
+                        if '+' in geom:
+                            res, offsets = geom.split('+', 1)
+                            wh = res.split('x')
+                            if len(wh) == 2:
+                                width_str = wh[0].split('/')[0]
+                                height_str = wh[1].split('/')[0]
+                                width = int(width_str)
+                                height = int(height_str)
+                                
+                                x = int(offsets.split('+')[0])
+                                y = int(offsets.split('+')[1]) if '+' in offsets else 0
+                                
+                                monitors.append({
+                                    'index': len(monitors),
+                                    'name': parts[1].lstrip('+'),
+                                    'width': width,
+                                    'height': height,
+                                    'x': x,
+                                    'y': y
+                                })
+                
+                return monitors if monitors else [{'index': 0, 'name': 'primary', 'width': 1920, 'height': 1080, 'x': 0, 'y': 0}]
+            
+            return [{'index': 0, 'name': 'primary', 'width': 1920, 'height': 1080, 'x': 0, 'y': 0}]
+        except Exception as e:
+            print(f"[Panel] Error getting monitors: {e}", flush=True)
+            return [{'index': 0, 'name': 'primary', 'width': 1920, 'height': 1080, 'x': 0, 'y': 0}]
+    
+    def _get_current_desktop(self):
+        """Get current desktop from root window property"""
+        try:
+            result = subprocess.run(
+                ["xprop", "-root", "_NET_CURRENT_DESKTOP"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if result.returncode == 0:
+                line = result.stdout.strip()
+                if '=' in line:
+                    desktop = int(line.split('=')[1].strip())
+                    return desktop
+            return 0
+        except Exception as e:
+            print(f"[Panel] Error getting current desktop: {e}", flush=True)
+            return 0
+    
+    def _get_panel_window_id(self):
+        """Get the actual panel window ID using xdotool or fallback to Qt winId"""
+        # Only try xdotool if it's available
+        if self._xdotool_available:
+            try:
+                result = subprocess.run(
+                    ["xdotool", "search", "--class", "kosdwm"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    win_ids = result.stdout.strip().split('\n')
+                    if win_ids:
+                        return win_ids[0].strip()
+                
+                result = subprocess.run(
+                    ["xdotool", "search", "--name", "KosDWM"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    win_ids = result.stdout.strip().split('\n')
+                    if win_ids:
+                        return win_ids[0].strip()
+            except Exception:
+                pass  # Fall through to Qt winId
+        
+        # Fallback to Qt window ID
+        parent = self.parent()
+        if parent:
+            return str(int(parent.winId()))
+        return str(int(self.winId()))
+    
+    def _check_desktop_change(self):
+        """Check if desktop changed using environment variable WINDOWID"""
+        try:
+            # Get WINDOWID from environment - this changes when switching desktops!
+            env_windowid = os.environ.get('WINDOWID', '')
+            current_desktop = self._get_current_desktop()
+            
+            if self.last_desktop == -1:
+                self.last_desktop = current_desktop
+                self._last_windowid = env_windowid
+                print(f"[Panel] Initial desktop: {current_desktop}, WINDOWID: {env_windowid}", flush=True)
+                self._make_sticky()
+                return
+            
+            # Check if desktop changed (either desktop number or WINDOWID)
+            if current_desktop != self.last_desktop or env_windowid != getattr(self, '_last_windowid', ''):
+                print(f"[Panel] DESKTOP SWITCHED: {self.last_desktop} -> {current_desktop}, WINDOWID: {self._last_windowid} -> {env_windowid}", flush=True)
+                self.last_desktop = current_desktop
+                self._last_windowid = env_windowid
+                
+                win_id = self._get_panel_window_id()
+                print(f"[Panel] Panel window ID: {win_id}", flush=True)
+                
+                # Move panel to new desktop
+                subprocess.run(
+                    ["wmctrl", "-i", "-r", win_id, "-t", str(current_desktop)],
+                    capture_output=True,
+                    timeout=5
+                )
+                
+                # Keep it above other windows
+                subprocess.run(
+                    ["wmctrl", "-i", "-r", win_id, "-b", "add,above"],
+                    capture_output=True,
+                    timeout=5
+                )
+                
+                print(f"[Panel] Moved panel to desktop {current_desktop}", flush=True)
+                
+        except Exception as e:
+            print(f"[Panel] Error in desktop check: {e}", flush=True)
+    
+    def _make_sticky(self):
+        """Make panel visible on all desktops"""
+        try:
+            win_id = self._get_panel_window_id()
+            print(f"[Panel] Making window {win_id} sticky", flush=True)
+            
+            subprocess.run(
+                ["wmctrl", "-i", "-r", win_id, "-b", "add,sticky"],
+                capture_output=True,
+                timeout=5
+            )
+            
+            subprocess.run(
+                ["xprop", "-id", win_id, "-f", "_NET_WM_DESKTOP", "32c", 
+                 "-set", "_NET_WM_DESKTOP", "4294967295"],
+                capture_output=True,
+                timeout=5
+            )
+            
+            subprocess.run(
+                ["xprop", "-id", win_id, "-f", "_NET_WM_WINDOW_TYPE", "32a",
+                 "-set", "_NET_WM_WINDOW_TYPE", "_NET_WM_WINDOW_TYPE_DOCK"],
+                capture_output=True,
+                timeout=5
+            )
+            
+            subprocess.run(
+                ["wmctrl", "-i", "-r", win_id, "-b", "add,sticky,above"],
+                capture_output=True,
+                timeout=5
+            )
+            
+            print(f"[Panel] Window {win_id} made sticky", flush=True)
+            
+        except Exception as e:
+            print(f"[Panel] Error making sticky: {e}", flush=True)
+    
+    def _update_panel_position(self):
+        mode = self.monitor_config.get("mode", "primary")
+        monitors = self.get_monitors()
+        
+        if not monitors:
+            return
+        
+        if mode == "all":
+            return
+        elif mode == "primary":
+            return
+        elif mode == "specific":
+            index = self.monitor_config.get("specific_index", 0)
+            if 0 <= index < len(monitors):
+                target_monitor = monitors[index]
+                self._reposition_on_monitor(target_monitor)
+    
+    def _reposition_on_monitor(self, monitor):
+        parent = self.parent()
+        if parent:
+            parent.move(monitor['x'], 0)
+            print(f"[Panel] Moved to monitor {monitor['index']}", flush=True)
+    
+    def reload_monitor_config(self):
+        self.monitor_config = self._load_monitor_config()
+        self._update_panel_position()
+        self._make_sticky()
+    
+    def reload_datetime_config(self):
+        self.datetime_config = self._load_datetime_config()
         self.timer.stop()
         self.timer.start(self.datetime_config.get("update_interval", 1000))
         
-        # Update font
         font = QFont(
             self.datetime_config.get("font_family", "Arial"),
             self.datetime_config.get("font_size", 10)
@@ -156,36 +387,27 @@ class Panel(QFrame):
             font.setBold(True)
         self.time_label.setFont(font)
         
-        # Update color
         color = self.datetime_config.get("color", "#ffffff")
         self.time_label.setStyleSheet(f"color: {color};")
-        
-        # Force update
         self.update_time()
-        
-        # Emit signal
         self.datetime_changed.emit()
     
     def setup_ui(self):
-        """Setup the panel UI"""
         layout = QHBoxLayout(self)
         layout.setContentsMargins(5, 2, 5, 2)
         layout.setSpacing(5)
         
-        # Left side: Menus button with dynamic menu
         self.menus_button = QPushButton("☰")
         self.menus_button.setFixedWidth(30)
         self.menus_button.setMenu(self.build_menus_menu())
         layout.addWidget(self.menus_button)
         
-        # Window switcher dropdown
         self.window_combo = QComboBox()
         self.window_combo.setPlaceholderText("🪟 Windows")
         self.window_combo.setEnabled(self.window_manager.is_available())
         self.window_combo.currentIndexChanged.connect(self.on_window_selected)
         layout.addWidget(self.window_combo)
         
-        # Desktop buttons
         self.desktop_group = QButtonGroup(self)
         self.desktop_buttons = []
         for i in range(4):
@@ -198,7 +420,6 @@ class Panel(QFrame):
             self.desktop_buttons.append(btn)
             layout.addWidget(btn)
         
-        # Middle: Gadgets frame
         self.gadgets_frame = QFrame()
         self.gadgets_frame.setStyleSheet("background-color: transparent;")
         self.gadgets_layout = QHBoxLayout(self.gadgets_frame)
@@ -208,7 +429,6 @@ class Panel(QFrame):
         
         layout.addStretch()
         
-        # Clock with configured font
         font = QFont(
             self.datetime_config.get("font_family", "Arial"),
             self.datetime_config.get("font_size", 10)
@@ -221,7 +441,6 @@ class Panel(QFrame):
         self.time_label.setStyleSheet(f"color: {self.datetime_config.get('color', '#ffffff')};")
         layout.addWidget(self.time_label)
         
-        # Config dropdown
         self.config_combo = QComboBox()
         self.config_combo.setPlaceholderText("⚙ Config")
         self.config_combo.addItem("Manage Gadgets")
@@ -234,51 +453,37 @@ class Panel(QFrame):
         self.config_combo.currentIndexChanged.connect(self.on_config_selected)
         layout.addWidget(self.config_combo)
         
-        # Load gadgets
         self.load_gadgets()
-        
-        # Set current desktop
         self.update_desktop_buttons()
-        
-        # Initial window list population
         self.update_window_list()
     
     def update_window_list(self):
-        """Update the window switcher dropdown with current windows"""
         if not self.window_manager.is_available():
             self.window_combo.setEnabled(False)
             return
         
         self.window_combo.setEnabled(True)
         
-        # Get current selection before clearing
         current_id = None
         current_index = self.window_combo.currentIndex()
-        if current_index > 0:  # 0 is placeholder
+        if current_index > 0:
             current_data = self.window_combo.itemData(current_index)
             if current_data:
                 current_id = current_data.get('id')
         
-        # Block signals while updating
         self.window_combo.blockSignals(True)
         self.window_combo.clear()
-        
-        # Add placeholder with icon
         self.window_combo.addItem("🪟 Windows", None)
         
-        # Get windows and add to dropdown
         windows = self.window_manager.get_windows()
         selected_index = 0
         
         for i, window in enumerate(windows):
-            # Truncate long titles
             title = window['title']
             display_title = title[:32] + "..." if len(title) > 35 else title
-            
-            # Add desktop number prefix if not on current desktop
             display_text = display_title
             desktop_prefix = ""
-            if window['desktop'] != -1:  # -1 means sticky/all desktops
+            if window['desktop'] != -1:
                 current_desktop = self.desktop_manager.current_desktop
                 if window['desktop'] != current_desktop:
                     desktop_prefix = f"[{window['desktop']+1}] "
@@ -286,27 +491,21 @@ class Panel(QFrame):
             
             index = self.window_combo.count()
             self.window_combo.addItem(display_text, window)
-            
-            # Set tooltip with full info
             tooltip = f"{desktop_prefix}{window['name']}\nDesktop: {window['desktop']+1 if window['desktop'] >= 0 else 'All'}"
             self.window_combo.setItemData(index, tooltip, Qt.ToolTipRole)
             
-            # Restore selection if this window was selected
             if current_id and window['id'] == current_id:
                 selected_index = index
         
-        # Restore selection
         self.window_combo.setCurrentIndex(selected_index)
         self.window_combo.blockSignals(False)
     
     def on_window_selected(self, index):
-        """Handle window selection from dropdown"""
-        if index <= 0:  # Placeholder selected
+        if index <= 0:
             return
         
         window = self.window_combo.itemData(index)
         if window and 'id' in window:
-            # Visual feedback - briefly highlight the combo
             self.window_combo.setStyleSheet("""
                 QComboBox {
                     background-color: #666666;
@@ -319,18 +518,13 @@ class Panel(QFrame):
                 }
             """)
             
-            # Activate the window
             success = self.window_manager.activate_window(window['id'])
-            
-            # Reset to placeholder after activation
             self.window_combo.setCurrentIndex(0)
             
-            # Reset style after a short delay
             from PyQt5.QtCore import QTimer
             QTimer.singleShot(200, self._reset_window_combo_style)
     
     def _reset_window_combo_style(self):
-        """Reset window combo to normal style"""
         self.window_combo.setStyleSheet("""
             QComboBox {
                 background-color: #4a4a4a;
@@ -361,33 +555,23 @@ class Panel(QFrame):
         """)
     
     def load_gadgets(self):
-        """Load gadgets into the panel"""
         from src.gadgets_pyqt5 import GadgetManager
         
-        # Clear existing gadgets
         while self.gadgets_layout.count():
             item = self.gadgets_layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
         
-        # Create gadget manager and store as instance variable for config access
         if not hasattr(self, 'gadget_manager') or self.gadget_manager is None:
             self.gadget_manager = GadgetManager()
         
-        # Store gadget->button mapping for refresh
         self._gadget_buttons = {}
-        
-        # Debug: print how many gadgets we're loading
         enabled = self.gadget_manager.get_enabled_gadgets()
-        print(f"[Panel] Loading {len(enabled)} gadgets")
         
-        # Add enabled gadgets - pass panel reference so gadgets can access API
         for gadget in enabled:
-            print(f"[Panel] Adding gadget: {gadget.get_name()} with icon {gadget.get_icon()}")
             btn = QPushButton(gadget.get_icon())
             btn.setFixedSize(40, 22)
             btn.setToolTip(gadget.get_tooltip())
-            # Make button visible and styled
             btn.setStyleSheet("""
                 QPushButton {
                     background-color: #4a4a4a;
@@ -400,92 +584,74 @@ class Panel(QFrame):
                     background-color: #555555;
                 }
             """)
-            # Store gadget reference on button to avoid lambda capture issues
             btn._gadget = gadget
             btn.clicked.connect(self._on_gadget_clicked)
             self.gadgets_layout.addWidget(btn)
-            # Store mapping
             self._gadget_buttons[gadget.get_name()] = btn
-            # Set panel reference on gadget for refresh notifications and API access
             gadget.set_panel(self)
         
-        # Force layout update
         self.gadgets_frame.update()
         self.gadgets_frame.show()
-        print(f"[Panel] Gadgets loaded: {list(self._gadget_buttons.keys())}")
     
     def refresh_gadget_icon(self, gadget):
-        """Refresh icon for a specific gadget"""
         if hasattr(self, '_gadget_buttons') and gadget.get_name() in self._gadget_buttons:
             btn = self._gadget_buttons[gadget.get_name()]
             btn.setText(gadget.get_icon())
             btn.setToolTip(gadget.get_tooltip())
     
     def _on_gadget_clicked(self):
-        """Handle gadget button click"""
         btn = self.sender()
         if btn and hasattr(btn, '_gadget'):
             try:
                 btn._gadget.on_click()
             except Exception as e:
-                print(f"Error in gadget click: {e}")
+                print(f"Error in gadget click: {e}", flush=True)
                 import traceback
                 traceback.print_exc()
     
     def update_time(self):
-        """Update the clock with configured format"""
         date_part = ""
         time_part = ""
         
-        # Get current datetime
         now = datetime.now()
         
-        # Build time string if enabled
         if self.datetime_config.get("show_time", True):
             if self.datetime_config.get("time_format") == "12h":
-                # 12-hour format
                 if self.datetime_config.get("show_seconds"):
                     time_part = now.strftime("%I:%M:%S %p")
                 else:
                     time_part = now.strftime("%I:%M %p")
             else:
-                # 24-hour format
                 if self.datetime_config.get("show_seconds"):
                     time_part = now.strftime("%H:%M:%S")
                 else:
                     time_part = now.strftime("%H:%M")
         
-        # Build date string if enabled
         if self.datetime_config.get("show_date", False):
             date_format = self.datetime_config.get("date_format", "%Y-%m-%d")
             try:
                 date_part = now.strftime(date_format)
             except:
-                date_part = now.strftime("%Y-%m-%d")  # Fallback
+                date_part = now.strftime("%Y-%m-%d")
         
-        # Combine based on order setting
         order = self.datetime_config.get("order", "date_time")
         if order == "time_date":
             parts = [p for p in [time_part, date_part] if p]
-        else:  # date_time
+        else:
             parts = [p for p in [date_part, time_part] if p]
         
         display_text = " ".join(parts)
         self.time_label.setText(display_text)
     
     def switch_desktop(self, desktop_id):
-        """Switch to specified desktop"""
         self.desktop_manager.switch_to_desktop(desktop_id)
-        # Update window list to show new desktop's windows
         self.update_window_list()
     
     def on_desktop_changed(self, desktop_id):
-        """Handle desktop change"""
         self.update_desktop_buttons()
         self.update_window_list()
     
     def update_desktop_buttons(self):
-        """Update desktop button states"""
         current = self.desktop_manager.current_desktop
         for i, btn in enumerate(self.desktop_buttons):
             btn.setChecked(i == current)
@@ -495,11 +661,8 @@ class Panel(QFrame):
                 btn.setStyleSheet("background-color: #4a4a4a;")
     
     def build_menus_menu(self):
-        """Build the dynamic menus"""
-        print(f"[Panel] build_menus_menu called")
         menu = QMenu(self)
         
-        # Light theme for menu
         menu.setStyleSheet("""
             QMenu {
                 background-color: #f5f5f5;
@@ -522,22 +685,16 @@ class Panel(QFrame):
                 margin: 5px 0px;
             }
         """)
-        # Load dynamic menus from directory structure
+        
         menus = self.menu_manager.load_menus()
-        print(f"[Panel] Loaded {len(menus)} menus from menu_manager")
         
         for menu_data in menus:
             menu_name = menu_data.get("name")
             menu_type = menu_data.get("type")
-            print(f"[Panel] Processing menu: {menu_name} (type={menu_type})")
             
             if menu_type == "xdgmenumaker":
-                # xdgmenumaker generates its own submenu
-                print(f"[Panel]  Adding xdgmenumaker menu: {menu_name}")
                 xdg_menu = self.menu_manager._generate_xdg_menu(menu_data)
-                # Add as submenu
                 submenu = menu.addMenu(menu_name)
-                # Copy actions from xdg_menu to submenu
                 for action in xdg_menu.actions():
                     if action.menu():
                         new_submenu = submenu.addMenu(action.text())
@@ -548,101 +705,105 @@ class Panel(QFrame):
                     else:
                         submenu.addAction(action)
             elif menu_type == "script":
-                # Script menu
-                print(f"[Panel]  Adding script menu: {menu_name}")
                 action = menu.addAction(menu_name)
                 script_path = menu_data.get("path", "")
                 venv_path = menu_data.get("venv", "")
                 action.triggered.connect(
-                    lambda checked, p=script_path, v=venv_path: self.menu_manager._run_script(p, v)
+                    lambda checked, p=script_path, v=venv_path: 
+                    self.menu_manager._run_script_menu(p, v)
                 )
-            elif menu_type == "leaf":
-                # Leaf menu
-                print(f"[Panel]  Adding leaf menu: {menu_name}")
-                action = menu.addAction(menu_name)
-                action.triggered.connect(
-                    lambda checked, m=menu_data: self.menu_manager._open_leaf_menu(m)
-                )
-            elif menu_type == "branch":
-                # Create top-level submenu
-                submenu = menu.addMenu(menu_data["name"])
-                self.menu_manager._populate_menu(submenu, menu_data.get("items", []))
-                print(f"[Panel]  Added branch menu: {menu_name}")
+            elif menu_type == "separator":
+                menu.addSeparator()
         
         menu.addSeparator()
-        menu.addAction("Exit", self.window().close)
+        
+        refresh_action = menu.addAction("🔄 Refresh Menus")
+        refresh_action.triggered.connect(self._refresh_menus)
         
         return menu
     
-    def on_config_selected(self, index):
-        """Handle configuration dropdown selection"""
-        if index < 0:
-            return
-        
-        # Block signals temporarily to prevent re-triggering when resetting
-        self.config_combo.blockSignals(True)
-        self.config_combo.setCurrentIndex(-1)
-        self.config_combo.blockSignals(False)
-        
-        # Open appropriate dialog
-        if index == 0:
-            self.open_gadget_config()
-        elif index == 1:
-            self.open_panel_config()
-        elif index == 2:
-            self.open_menu_config()
-        elif index == 3:
-            self.open_datetime_config()
-        elif index == 4:
-            self.open_about_dialog()
-    
-    def open_gadget_config(self):
-        """Open gadget configuration"""
-        from src.gadget_config_pyqt5 import GadgetConfigDialog
-        
-        dialog = GadgetConfigDialog(self.gadget_manager, self)
-        if dialog.exec_():
-            self.load_gadgets()
-    
-    def open_panel_config(self):
-        """Open panel configuration"""
-        from src.panel_config_pyqt5 import PanelConfigDialog
-        
-        dialog = PanelConfigDialog(self)
-        dialog.exec_()
-    
-    def open_menu_config(self):
-        """Open menu configuration"""
-        from src.menu_config_pyqt5 import MenuConfigDialog
-        
-        dialog = MenuConfigDialog(self)
-        # Connect signal to reload menus when changes are saved
-        dialog.menus_changed.connect(self.reload_menus)
-        dialog.exec_()
-    
-    def reload_menus(self):
-        """Reload menus from disk and refresh the menu button"""
-        # Clear and rebuild the menus menu
+    def _refresh_menus(self):
         self.menus_button.setMenu(self.build_menus_menu())
     
-    def open_datetime_config(self):
-        """Open date/time configuration"""
-        from src.datetime_config_pyqt5 import DateTimeConfigDialog
+    def on_config_selected(self, index):
+        if index <= 0:
+            return
         
+        text = self.config_combo.currentText()
+        self.config_combo.setCurrentIndex(0)
+        
+        if text == "Manage Gadgets":
+            self.show_gadget_manager()
+        elif text == "Panel Settings":
+            self.show_panel_settings()
+        elif text == "Menu Settings":
+            self.show_menu_settings()
+        elif text == "Date/Time Settings":
+            self.show_datetime_settings()
+        elif text == "About KosDWM":
+            self.show_about()
+    
+    def show_gadget_manager(self):
+        from src.gadgets_pyqt5 import GadgetManagerDialog
+        dialog = GadgetManagerDialog(self)
+        dialog.gadgets_changed.connect(self.load_gadgets)
+        dialog.exec_()
+    
+    def show_panel_settings(self):
+        from src.panel_config_pyqt5 import PanelConfigDialog
+        dialog = PanelConfigDialog(self)
+        dialog.config_saved.connect(self.reload_monitor_config)
+        dialog.exec_()
+    
+    def show_menu_settings(self):
+        from src.menu_config_pyqt5 import MenuConfigDialog
+        dialog = MenuConfigDialog(self)
+        dialog.menus_changed.connect(self._refresh_menus)
+        dialog.exec_()
+    
+    def show_datetime_settings(self):
+        from src.datetime_config_pyqt5 import DateTimeConfigDialog
         dialog = DateTimeConfigDialog(self)
-        # Connect signal to reload datetime settings when changes are saved
         dialog.config_saved.connect(self.reload_datetime_config)
         dialog.exec_()
     
-    def open_about_dialog(self):
-        """Open About KosDWM dialog"""
-        from src.about_dialog_pyqt5 import AboutDialog
+    def show_about(self):
+        from PyQt5.QtWidgets import QMessageBox
+        QMessageBox.about(
+            self,
+            "About KosDWM",
+            "<h2>KosDWM Panel</h2>"
+            "<p>Version 1.0.0</p>"
+            "<p>A lightweight desktop panel for KosDWM window manager.</p>"
+            "<p>Built with PyQt5</p>"
+        )
+    
+    def create_clone(self, monitor):
+        from PyQt5.QtWidgets import QMainWindow
         
-        dialog = AboutDialog(self)
-        dialog.exec_()
+        clone_window = QMainWindow()
+        clone_window.setWindowTitle(f"KosDWM Panel - Monitor {monitor['index']}")
+        clone_window.setWindowFlags(
+            Qt.FramelessWindowHint | 
+            Qt.WindowStaysOnTopHint |
+            Qt.Tool
+        )
+        
+        clone_panel = Panel(parent=clone_window, is_clone=True)
+        clone_window.setCentralWidget(clone_panel)
+        
+        clone_window.setGeometry(
+            monitor['x'], 0,
+            monitor['width'], 30
+        )
+        
+        clone_window.show()
+        self.clone_windows.append(clone_window)
+        
+        return clone_window
     
     def closeEvent(self, event):
-        """Clean up on close - stop the API server"""
-        if hasattr(self, 'api') and self.api:
-            self.api.stop()
+        self.api.stop()
+        for clone in self.clone_windows:
+            clone.close()
         event.accept()

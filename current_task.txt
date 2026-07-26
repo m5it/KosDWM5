@@ -1,4 +1,4 @@
-Plan: Add Date/Time Order Option
+Plan: Add Multi-Monitor Panel Settings
 Progress: 3/3 completed (0 blocked)
 No task in progress.
-Updated: 2026-07-26 19:06:13
+Updated: 2026-07-26 21:45:21

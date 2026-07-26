@@ -2,29 +2,34 @@
 """
 Panel Configuration Dialog for KosDWM PyQt5
 
-Allows configuring panel colors, sizes, fonts, and styling
+Allows configuring panel colors, sizes, fonts, styling, and multi-monitor placement
 """
 
 import json
+import subprocess
 from pathlib import Path
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTabWidget, QWidget, QFormLayout, QLineEdit, QSpinBox,
-    QComboBox, QColorDialog, QFontDialog, QMessageBox
+    QComboBox, QColorDialog, QFontDialog, QMessageBox, QCheckBox,
+    QGroupBox
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor, QFont
 
 
 class PanelConfigDialog(QDialog):
     """
-    Configuration dialog for panel appearance and behavior
+    Configuration dialog for panel appearance, behavior, and monitor placement
     """
+    
+    # Signal emitted when configuration is saved
+    config_saved = pyqtSignal()
     
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("⚙️ Panel Configuration")
-        self.setGeometry(100, 100, 500, 400)
+        self.setGeometry(100, 100, 500, 450)
         
         # Dark theme styling
         self.setStyleSheet("""
@@ -101,6 +106,14 @@ class PanelConfigDialog(QDialog):
             QTabBar::tab:selected {
                 background-color: #4a4a4a;
             }
+            QCheckBox {
+                color: #ffffff;
+                spacing: 8px;
+            }
+            QCheckBox::indicator {
+                width: 18px;
+                height: 18px;
+            }
         """)
         
         self.config_path = Path.home() / ".config" / "KosDWM" / "panel.json"
@@ -141,6 +154,11 @@ class PanelConfigDialog(QDialog):
                 "text_color": "#333333",
                 "hover_bg": "#4a90d9",
                 "hover_text": "#ffffff"
+            },
+            "monitor": {
+                "mode": "primary",  # "primary", "specific", "all", "follow_active"
+                "specific_index": 0,
+                "follow_interval": 500
             }
         }
         
@@ -171,6 +189,27 @@ class PanelConfigDialog(QDialog):
             QMessageBox.critical(self, "Error", f"Failed to save config:\n{e}")
             return False
     
+    def get_monitor_count(self):
+        """Get number of connected monitors using xrandr"""
+        try:
+            result = subprocess.run(
+                ["xrandr", "--listactivemonitors"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if result.returncode == 0:
+                # First line is "Monitors: N", subsequent lines are monitor info
+                lines = result.stdout.strip().split('\n')
+                if lines:
+                    first_line = lines[0]
+                    if "Monitors:" in first_line:
+                        return int(first_line.split(':')[1].strip())
+            return 1  # Default to 1 if we can't detect
+        except Exception as e:
+            print(f"Error detecting monitors: {e}")
+            return 1
+    
     def setup_ui(self):
         """Setup the dialog UI with tabs"""
         layout = QVBoxLayout(self)
@@ -184,6 +223,10 @@ class PanelConfigDialog(QDialog):
         # Panel tab
         panel_tab = self._create_panel_tab()
         tabs.addTab(panel_tab, "Panel")
+        
+        # Monitor tab (NEW)
+        monitor_tab = self._create_monitor_tab()
+        tabs.addTab(monitor_tab, "Monitor")
         
         # Buttons tab
         buttons_tab = self._create_buttons_tab()
@@ -209,7 +252,7 @@ class PanelConfigDialog(QDialog):
         cancel_btn.clicked.connect(self.reject)
         btn_layout.addWidget(cancel_btn)
         
-        save_btn = QPushButton("Save")
+        save_btn = QPushButton("💾 Save")
         save_btn.clicked.connect(self.save_and_close)
         btn_layout.addWidget(save_btn)
         
@@ -234,6 +277,100 @@ class PanelConfigDialog(QDialog):
         layout.addRow("Height (px):", self.panel_height)
         
         return widget
+    
+    def _create_monitor_tab(self):
+        """Create monitor placement tab"""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setSpacing(15)
+        
+        # Info label
+        info_label = QLabel("Configure which monitor displays the panel")
+        info_label.setStyleSheet("color: #aaaaaa; font-size: 11px;")
+        layout.addWidget(info_label)
+        
+        # Monitor mode group
+        mode_group = QGroupBox("Monitor Mode")
+        mode_layout = QFormLayout(mode_group)
+        mode_layout.setSpacing(10)
+        
+        # Monitor mode dropdown
+        self.monitor_mode = QComboBox()
+        self.monitor_mode.addItems([
+            "Primary Monitor",
+            "Specific Monitor",
+            "All Monitors",
+            "Follow Active Monitor"
+        ])
+        mode_map = {
+            "primary": 0,
+            "specific": 1,
+            "all": 2,
+            "follow_active": 3
+        }
+        current_mode = self.config["monitor"].get("mode", "primary")
+        self.monitor_mode.setCurrentIndex(mode_map.get(current_mode, 0))
+        self.monitor_mode.currentIndexChanged.connect(self._on_monitor_mode_changed)
+        mode_layout.addRow("Display Mode:", self.monitor_mode)
+        
+        # Specific monitor index
+        self.monitor_index = QSpinBox()
+        self.monitor_index.setRange(0, 9)
+        self.monitor_index.setValue(self.config["monitor"].get("specific_index", 0))
+        self.monitor_index.setEnabled(current_mode == "specific")
+        mode_layout.addRow("Monitor Index:", self.monitor_index)
+        
+        # Detected monitors info
+        monitor_count = self.get_monitor_count()
+        self.monitor_info = QLabel(f"Detected monitors: {monitor_count}")
+        self.monitor_info.setStyleSheet("color: #4a90d9; font-size: 11px;")
+        mode_layout.addRow(self.monitor_info)
+        
+        layout.addWidget(mode_group)
+        
+        # Follow active settings group
+        follow_group = QGroupBox("Follow Active Settings")
+        follow_layout = QFormLayout(follow_group)
+        
+        self.follow_interval = QSpinBox()
+        self.follow_interval.setRange(100, 5000)
+        self.follow_interval.setSingleStep(100)
+        self.follow_interval.setValue(self.config["monitor"].get("follow_interval", 500))
+        self.follow_interval.setSuffix(" ms")
+        follow_layout.addRow("Check Interval:", self.follow_interval)
+        
+        follow_info = QLabel(
+            "When 'Follow Active Monitor' is selected, the panel will move\n"
+            "to whichever monitor has the active window."
+        )
+        follow_info.setStyleSheet("color: #aaaaaa; font-size: 10px;")
+        follow_layout.addRow(follow_info)
+        
+        layout.addWidget(follow_group)
+        
+        # Description labels
+        desc_group = QGroupBox("Mode Descriptions")
+        desc_layout = QVBoxLayout(desc_group)
+        
+        desc_text = QLabel(
+            "<b>Primary Monitor:</b> Always display on the primary monitor<br>"
+            "<b>Specific Monitor:</b> Display on a specific monitor by index<br>"
+            "<b>All Monitors:</b> Show panel on all connected monitors<br>"
+            "<b>Follow Active Monitor:</b> Panel follows the active window"
+        )
+        desc_text.setWordWrap(True)
+        desc_text.setStyleSheet("color: #cccccc; font-size: 11px; line-height: 1.4;")
+        desc_layout.addWidget(desc_text)
+        
+        layout.addWidget(desc_group)
+        layout.addStretch()
+        
+        return widget
+    
+    def _on_monitor_mode_changed(self, index):
+        """Handle monitor mode change"""
+        # Enable/disable specific index based on mode
+        self.monitor_index.setEnabled(index == 1)  # "Specific Monitor"
     
     def _create_buttons_tab(self):
         """Create buttons appearance tab"""
@@ -337,31 +474,38 @@ class PanelConfigDialog(QDialog):
         layout.setSpacing(10)
         
         # Background color
-        self.menu_bg_btn = QPushButton("Choose Color")
-        self.menu_bg_btn.clicked.connect(lambda: self._choose_color("menus", "background_color"))
-        self._update_color_button(self.menu_bg_btn, self.config["menus"]["background_color"])
-        layout.addRow("Background Color:", self.menu_bg_btn)
+        self.menus_bg_btn = QPushButton("Choose Color")
+        self.menus_bg_btn.clicked.connect(lambda: self._choose_color("menus", "background_color"))
+        self._update_color_button(self.menus_bg_btn, self.config["menus"]["background_color"])
+        layout.addRow("Background Color:", self.menus_bg_btn)
         
         # Text color
-        self.menu_text_btn = QPushButton("Choose Color")
-        self.menu_text_btn.clicked.connect(lambda: self._choose_color("menus", "text_color"))
-        self._update_color_button(self.menu_text_btn, self.config["menus"]["text_color"])
-        layout.addRow("Text Color:", self.menu_text_btn)
+        self.menus_text_btn = QPushButton("Choose Color")
+        self.menus_text_btn.clicked.connect(lambda: self._choose_color("menus", "text_color"))
+        self._update_color_button(self.menus_text_btn, self.config["menus"]["text_color"])
+        layout.addRow("Text Color:", self.menus_text_btn)
         
         # Hover background
-        self.menu_hover_btn = QPushButton("Choose Color")
-        self.menu_hover_btn.clicked.connect(lambda: self._choose_color("menus", "hover_bg"))
-        self._update_color_button(self.menu_hover_btn, self.config["menus"]["hover_bg"])
-        layout.addRow("Hover Background:", self.menu_hover_btn)
+        self.menus_hover_bg_btn = QPushButton("Choose Color")
+        self.menus_hover_bg_btn.clicked.connect(lambda: self._choose_color("menus", "hover_bg"))
+        self._update_color_button(self.menus_hover_bg_btn, self.config["menus"]["hover_bg"])
+        layout.addRow("Hover BG:", self.menus_hover_bg_btn)
+        
+        # Hover text
+        self.menus_hover_text_btn = QPushButton("Choose Color")
+        self.menus_hover_text_btn.clicked.connect(lambda: self._choose_color("menus", "hover_text"))
+        self._update_color_button(self.menus_hover_text_btn, self.config["menus"]["hover_text"])
+        layout.addRow("Hover Text:", self.menus_hover_text_btn)
         
         return widget
     
     def _choose_color(self, section, key):
-        """Open color picker and update config"""
+        """Open color picker for a config option"""
         current_color = self.config[section][key]
-        color = QColorDialog.getColor(QColor(current_color), self, "Choose Color")
+        color = QColorDialog.getColor(QColor(current_color), self, f"Choose {key.replace('_', ' ').title()}")
         if color.isValid():
             self.config[section][key] = color.name()
+            # Update the appropriate button
             if section == "panel" and key == "background_color":
                 self._update_color_button(self.panel_bg_btn, color.name())
             elif section == "buttons":
@@ -382,17 +526,23 @@ class PanelConfigDialog(QDialog):
                     self._update_color_button(self.switcher_text_btn, color.name())
             elif section == "menus":
                 if key == "background_color":
-                    self._update_color_button(self.menu_bg_btn, color.name())
+                    self._update_color_button(self.menus_bg_btn, color.name())
                 elif key == "text_color":
-                    self._update_color_button(self.menu_text_btn, color.name())
+                    self._update_color_button(self.menus_text_btn, color.name())
                 elif key == "hover_bg":
-                    self._update_color_button(self.menu_hover_btn, color.name())
+                    self._update_color_button(self.menus_hover_bg_btn, color.name())
+                elif key == "hover_text":
+                    self._update_color_button(self.menus_hover_text_btn, color.name())
     
     def _update_color_button(self, button, color):
-        """Update button to show selected color"""
-        text_color = '#ffffff' if QColor(color).lightness() < 128 else '#000000'
-        style = "background-color: %s; color: %s; border: 1px solid #555555; padding: 5px 10px; min-width: 100px;" % (color, text_color)
-        button.setStyleSheet(style)
+        """Update color button appearance"""
+        button.setStyleSheet(f"""
+            background-color: {color};
+            color: {'#ffffff' if QColor(color).lightness() < 128 else '#000000'};
+            border: 1px solid #555555;
+            padding: 5px 10px;
+            min-width: 100px;
+        """)
         button.setText(color)
     
     def _choose_clock_font(self):
@@ -412,23 +562,38 @@ class PanelConfigDialog(QDialog):
     
     def _update_font_button(self, button, clock_config):
         """Update font button text"""
-        font_str = "%s %spt" % (clock_config['font_family'], clock_config['font_size'])
+        font_str = f"{clock_config['font_family']} {clock_config['font_size']}pt"
         if clock_config['bold']:
             font_str += " Bold"
         button.setText(font_str)
     
     def save_and_close(self):
         """Save configuration and close dialog"""
+        # Update panel settings
         self.config["panel"]["height"] = self.panel_height.value()
+        
+        # Update monitor settings
+        mode_map = {
+            0: "primary",
+            1: "specific",
+            2: "all",
+            3: "follow_active"
+        }
+        self.config["monitor"]["mode"] = mode_map.get(self.monitor_mode.currentIndex(), "primary")
+        self.config["monitor"]["specific_index"] = self.monitor_index.value()
+        self.config["monitor"]["follow_interval"] = self.follow_interval.value()
+        
+        # Update button settings
         self.config["buttons"]["font_size"] = self.btn_font_size.value()
+        
+        # Update clock settings
         self.config["clock"]["format"] = self.clock_format.currentText()
+        
+        # Update window switcher settings
         self.config["window_switcher"]["min_width"] = self.switcher_min_width.value()
         self.config["window_switcher"]["max_width"] = self.switcher_max_width.value()
         
         if self._save_config():
-            QMessageBox.information(self, "Success", "Configuration saved!\nRestart KosDWM to apply changes.")
+            self.config_saved.emit()
+            QMessageBox.information(self, "Success", "Configuration saved!")
             self.accept()
-    
-    def get_config(self):
-        """Return current configuration"""
-        return self.config

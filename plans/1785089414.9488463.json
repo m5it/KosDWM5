@@ -1,0 +1,33 @@
+{
+  "id": "1785089414.9488463",
+  "title": "Add Multi-Monitor Panel Settings",
+  "instructions": "Add settings to PanelConfigDialog for selecting which monitor/screen the panel displays on. Options should include: Primary monitor, Specific monitor (by index), All monitors. Also add option to follow active monitor when switching with wmctrl. Update Panel to respect these settings and position itself accordingly.",
+  "startTimestamp": 1785089414.9488595,
+  "endTimestamp": 1785098721.8635547,
+  "tasks": {
+    "1785089416.9740772": {
+      "id": "1785089416.9740772",
+      "status": "completed",
+      "instruction": "Add \"monitor\" field to panel configuration with options: \"primary\", \"specific\" (with index), \"all\", \"follow_active\". Update default config in Panel and PanelConfigDialog.",
+      "startTimestamp": 1785089598.4259942,
+      "endTimestamp": 1785089610.1657052,
+      "log": []
+    },
+    "1785089419.1755662": {
+      "id": "1785089419.1755662",
+      "status": "completed",
+      "instruction": "Add a Monitor section to PanelConfigDialog with: QComboBox for mode (Primary, Specific Monitor, All Monitors, Follow Active), QSpinBox for specific monitor index (enabled only when mode is \"specific\"). Connect to preview and save.",
+      "startTimestamp": 1785089610.1657078,
+      "endTimestamp": 1785089619.0911245,
+      "log": []
+    },
+    "1785089421.9030576": {
+      "id": "1785089421.9030576",
+      "status": "completed",
+      "instruction": "Modify Panel to: detect available monitors using QDesktopWidget or QScreen, add method to position panel on specific monitor, handle \"follow_active\" mode by monitoring active window/monitor changes, update panel position when configuration changes.",
+      "startTimestamp": 1785089619.091128,
+      "endTimestamp": 1785089626.4850242,
+      "log": []
+    }
+  }
+}
