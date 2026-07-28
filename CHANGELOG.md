@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.15] - 2026-07-28
+
+### Changed
+- Auto-incremented from 1.2.14
+- Files: HISTORY.md, background.log, clearcache.py, debug_checkboxes.py, debug_config.py +45
+
+
 ## [1.2.14] - 2026-07-26
 
 ### Changed
